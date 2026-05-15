@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { ShieldCheck, User as UserIcon, LogIn } from "lucide-react";
+import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
 
 const departments = [
   { name: "CSE", full: "Computer Science", icon: Cpu, count: 1240, hue: "from-violet-500/30 to-fuchsia-500/30" },
@@ -96,7 +96,7 @@ function Navbar() {
 }
 
 function AuthArea() {
-  const { user, profile, isAdmin, loading } = useAuth();
+  const { user, profile, isAdmin, loading, signOut } = useAuth();
   if (loading) return <div className="w-20 h-9" />;
   if (!user) {
     return (
@@ -122,6 +122,13 @@ function AuthArea() {
         <span className="hidden sm:inline text-xs font-medium pr-1.5 max-w-[120px] truncate">{profile?.full_name || user.email}</span>
         <UserIcon className="w-3.5 h-3.5 text-muted-foreground sm:hidden" />
       </Link>
+      <button
+        onClick={() => signOut()}
+        title="Sign out"
+        className="inline-flex items-center justify-center w-9 h-9 rounded-xl glass hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground"
+      >
+        <LogOut className="w-4 h-4" />
+      </button>
     </div>
   );
 }

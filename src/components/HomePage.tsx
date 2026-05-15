@@ -26,6 +26,8 @@ import {
   Zap,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-context";
+import { ShieldCheck, User as UserIcon, LogIn } from "lucide-react";
 
 const departments = [
   { name: "CSE", full: "Computer Science", icon: Cpu, count: 1240, hue: "from-violet-500/30 to-fuchsia-500/30" },
@@ -87,17 +89,40 @@ function Navbar() {
           <a href="#departments" className="hover:text-foreground transition-colors">Departments</a>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button className="hidden sm:inline-flex text-sm px-4 py-2 rounded-xl text-muted-foreground hover:text-foreground transition-colors">
-            Sign in
-          </button>
-          <button className="text-sm font-medium px-4 py-2 rounded-xl gradient-bg text-background hover:opacity-90 transition-opacity inline-flex items-center gap-1.5">
-            <Upload className="w-4 h-4" />
-            Upload
-          </button>
-        </div>
+        <AuthArea />
       </nav>
     </header>
+  );
+}
+
+function AuthArea() {
+  const { user, profile, isAdmin, loading } = useAuth();
+  if (loading) return <div className="w-20 h-9" />;
+  if (!user) {
+    return (
+      <div className="flex items-center gap-2">
+        <Link to="/auth" className="text-sm font-medium px-4 py-2 rounded-xl gradient-bg text-background inline-flex items-center gap-1.5">
+          <LogIn className="w-4 h-4" /> Sign in
+        </Link>
+      </div>
+    );
+  }
+  const initials = (profile?.full_name || user.email || "U").split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+  return (
+    <div className="flex items-center gap-2">
+      {isAdmin && (
+        <Link to="/admin" className="hidden sm:inline-flex text-xs font-semibold px-3 py-2 rounded-xl gradient-bg text-background items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5" /> Admin
+        </Link>
+      )}
+      <Link to="/profile" className="inline-flex items-center gap-2 px-2 py-1.5 rounded-xl glass hover:bg-white/10 transition-colors">
+        <span className="w-7 h-7 rounded-lg gradient-bg flex items-center justify-center text-background text-xs font-bold overflow-hidden">
+          {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+        </span>
+        <span className="hidden sm:inline text-xs font-medium pr-1.5 max-w-[120px] truncate">{profile?.full_name || user.email}</span>
+        <UserIcon className="w-3.5 h-3.5 text-muted-foreground sm:hidden" />
+      </Link>
+    </div>
   );
 }
 

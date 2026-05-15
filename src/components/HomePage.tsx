@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { ShieldCheck, User as UserIcon, LogIn } from "lucide-react";
+import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
 
 const departments = [
   { name: "CSE", full: "Computer Science", icon: Cpu, count: 1240, hue: "from-violet-500/30 to-fuchsia-500/30" },

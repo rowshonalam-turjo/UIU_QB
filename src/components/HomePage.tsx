@@ -96,7 +96,7 @@ function Navbar() {
 }
 
 function AuthArea() {
-  const { user, profile, isAdmin, loading } = useAuth();
+  const { user, profile, isAdmin, loading, signOut } = useAuth();
   if (loading) return <div className="w-20 h-9" />;
   if (!user) {
     return (

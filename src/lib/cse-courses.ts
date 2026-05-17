@@ -1,0 +1,42 @@
+export type CSECourse = { code: string; title: string; credit?: number };
+
+export const CSE_COURSES: CSECourse[] = [
+  { code: "CSE 1111", title: "Structured Programming Language" },
+  { code: "CSE 1112", title: "Structured Programming Language Lab" },
+  { code: "CSE 1325", title: "Discrete Mathematics" },
+  { code: "CSE 2215", title: "Data Structures and Algorithms I" },
+  { code: "CSE 2216", title: "Data Structures and Algorithms I Lab" },
+  { code: "CSE 2217", title: "Object Oriented Programming" },
+  { code: "CSE 2218", title: "Object Oriented Programming Lab" },
+  { code: "CSE 2233", title: "Theory of Computation" },
+  { code: "CSE 2313", title: "Digital Logic Design" },
+  { code: "CSE 2314", title: "Digital Logic Design Lab" },
+  { code: "CSE 2319", title: "Algorithm Design and Analysis" },
+  { code: "CSE 2320", title: "Algorithm Design and Analysis Lab" },
+  { code: "CSE 3313", title: "Computer Architecture" },
+  { code: "CSE 3315", title: "Microprocessors and Embedded Systems" },
+  { code: "CSE 3316", title: "Microprocessors and Embedded Systems Lab" },
+  { code: "CSE 3411", title: "Database Management Systems" },
+  { code: "CSE 3412", title: "Database Management Systems Lab" },
+  { code: "CSE 3421", title: "System Analysis and Design" },
+  { code: "CSE 3423", title: "Software Engineering" },
+  { code: "CSE 3431", title: "Computer Networks" },
+  { code: "CSE 3432", title: "Computer Networks Lab" },
+  { code: "CSE 3521", title: "Operating Systems" },
+  { code: "CSE 3522", title: "Operating Systems Lab" },
+  { code: "CSE 3531", title: "Compiler Design" },
+  { code: "CSE 4413", title: "Web Programming" },
+  { code: "CSE 4414", title: "Web Programming Lab" },
+  { code: "CSE 4495", title: "Machine Learning" },
+  { code: "CSE 4496", title: "Machine Learning Lab" },
+  { code: "CSE 4525", title: "Artificial Intelligence" },
+  { code: "CSE 4526", title: "Artificial Intelligence Lab" },
+  { code: "CSE 4621", title: "Computer Graphics" },
+  { code: "CSE 4622", title: "Computer Graphics Lab" },
+  { code: "CSE 4631", title: "Digital Image Processing" },
+  { code: "CSE 4711", title: "Cyber Security" },
+  { code: "CSE 4799", title: "Capstone Project" },
+];
+
+export const UPLOAD_TYPES = ["CT", "Mid", "Final", "Assignment"] as const;
+export type UploadType = (typeof UPLOAD_TYPES)[number];

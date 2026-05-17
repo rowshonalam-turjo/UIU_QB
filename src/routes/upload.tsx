@@ -5,14 +5,19 @@ import { ArrowLeft, Upload as UploadIcon, Loader2, FileText, X } from "lucide-re
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CSE_COURSES, UPLOAD_TYPES } from "@/lib/cse-courses";
 
 export const Route = createFileRoute("/upload")({
   head: () => ({ meta: [{ title: "Upload — UIU Question Bank" }] }),
   component: UploadPage,
 });
 
-const departments = ["CSE", "EEE", "BBA", "MATH", "PHR", "CHEM", "ENG", "LAW"];
-const types = ["CT", "Mid", "Final", "Assignment", "Viva", "Lab", "Notes"];
+const TRIMESTERS = (() => {
+  const out: string[] = [];
+  const seasons = ["Spring", "Summer", "Fall"];
+  for (let y = 2026; y >= 2019; y--) for (const s of seasons) out.push(`${s} ${y}`);
+  return out;
+})();
 
 function UploadPage() {
   const navigate = useNavigate();
@@ -20,12 +25,12 @@ function UploadPage() {
 
   const [title, setTitle] = useState("");
   const [courseCode, setCourseCode] = useState("");
-  const [department, setDepartment] = useState("");
   const [type, setType] = useState("");
   const [trimester, setTrimester] = useState("");
   const [teacher, setTeacher] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [solution, setSolution] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -36,43 +41,49 @@ function UploadPage() {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
 
+  const uploadFile = async (f: File) => {
+    const ext = f.name.split(".").pop() || "bin";
+    const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("questions").upload(path, f, { cacheControl: "3600", upsert: false });
+    if (error) throw error;
+    const { data } = supabase.storage.from("questions").getPublicUrl(path);
+    return { path, url: data.publicUrl };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) { toast.error("Please choose a file"); return; }
-    if (file.size > 20 * 1024 * 1024) { toast.error("File too large (max 20MB)"); return; }
+    if (!file) { toast.error("Please choose a question file"); return; }
+    if (file.size > 20 * 1024 * 1024) { toast.error("Question file too large (max 20MB)"); return; }
+    if (solution && solution.size > 20 * 1024 * 1024) { toast.error("Solution file too large (max 20MB)"); return; }
 
     setBusy(true);
     try {
-      const ext = file.name.split(".").pop() || "bin";
-      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-      const { error: upErr } = await supabase.storage.from("questions").upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-      if (upErr) throw upErr;
-
-      const { data: pub } = supabase.storage.from("questions").getPublicUrl(path);
+      const q = await uploadFile(file);
+      let sol: { path: string; url: string } | null = null;
+      if (solution) sol = await uploadFile(solution);
 
       const { error: insErr } = await supabase.from("uploads").insert({
         user_id: user.id,
         title,
         course_code: courseCode,
-        department: department || null,
+        department: "CSE",
         type,
         trimester: trimester || null,
         teacher: teacher || null,
         description: description || null,
-        file_url: pub.publicUrl,
-        file_path: path,
+        file_url: q.url,
+        file_path: q.path,
         file_name: file.name,
         file_size: file.size,
+        solution_url: sol?.url ?? null,
+        solution_path: sol?.path ?? null,
+        solution_name: solution?.name ?? null,
         status: "pending",
       });
       if (insErr) throw insErr;
 
       toast.success("Uploaded! It will appear after admin approval.");
-      navigate({ to: "/" });
+      navigate({ to: "/courses" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -94,8 +105,8 @@ function UploadPage() {
                 <UploadIcon className="w-5 h-5 text-background" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Share a question paper</h1>
-                <p className="text-sm text-muted-foreground">PDF, image, doc — max 20MB. Reviewed by admins.</p>
+                <h1 className="text-2xl font-bold">Share a CSE paper</h1>
+                <p className="text-sm text-muted-foreground">PDF preferred · max 20MB · reviewed by admins.</p>
               </div>
             </div>
 
@@ -103,51 +114,37 @@ function UploadPage() {
               <Field label="Title" full>
                 <input required value={title} onChange={(e) => setTitle(e.target.value)} className="input" placeholder="Data Structures — Final 2024" />
               </Field>
-              <Field label="Course code">
-                <input required value={courseCode} onChange={(e) => setCourseCode(e.target.value)} className="input" placeholder="CSE 2215" />
+              <Field label="Course">
+                <select required value={courseCode} onChange={(e) => setCourseCode(e.target.value)} className="input">
+                  <option value="">Select course…</option>
+                  {CSE_COURSES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.title}</option>)}
+                </select>
               </Field>
               <Field label="Type">
                 <select required value={type} onChange={(e) => setType(e.target.value)} className="input">
                   <option value="">Select…</option>
-                  {types.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </Field>
-              <Field label="Department">
-                <select value={department} onChange={(e) => setDepartment(e.target.value)} className="input">
-                  <option value="">Select…</option>
-                  {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                  {UPLOAD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </Field>
               <Field label="Trimester">
-                <input value={trimester} onChange={(e) => setTrimester(e.target.value)} className="input" placeholder="Spring 2024" />
+                <select value={trimester} onChange={(e) => setTrimester(e.target.value)} className="input">
+                  <option value="">Select…</option>
+                  {TRIMESTERS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
               </Field>
-              <Field label="Teacher (optional)" full>
+              <Field label="Teacher (optional)">
                 <input value={teacher} onChange={(e) => setTeacher(e.target.value)} className="input" placeholder="Dr. Mahmud" />
               </Field>
               <Field label="Description (optional)" full>
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input" rows={3} placeholder="Any notes about this paper…" />
               </Field>
 
-              <Field label="File" full>
-                {file ? (
-                  <div className="flex items-center gap-3 p-4 rounded-xl glass">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{file.name}</div>
-                      <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                    </div>
-                    <button type="button" onClick={() => setFile(null)} className="p-2 rounded-lg hover:bg-white/10">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center p-8 rounded-xl glass border-2 border-dashed border-border cursor-pointer hover:bg-white/5 transition-colors">
-                    <UploadIcon className="w-6 h-6 text-muted-foreground mb-2" />
-                    <span className="text-sm">Click to choose a file</span>
-                    <span className="text-xs text-muted-foreground mt-1">PDF, DOCX, images, ZIP — up to 20MB</span>
-                    <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-                  </label>
-                )}
+              <Field label="Question file (PDF preferred)" full>
+                <FilePicker file={file} onChange={setFile} />
+              </Field>
+
+              <Field label="Solution file (optional)" full>
+                <FilePicker file={solution} onChange={setSolution} hint="Upload the solution PDF if you have one — students will be able to download it alongside the question." />
               </Field>
 
               <div className="sm:col-span-2 flex justify-end">
@@ -166,6 +163,28 @@ function UploadPage() {
         .input:focus { box-shadow: 0 0 0 2px var(--color-primary); }
       `}</style>
     </div>
+  );
+}
+
+function FilePicker({ file, onChange, hint }: { file: File | null; onChange: (f: File | null) => void; hint?: string }) {
+  return file ? (
+    <div className="flex items-center gap-3 p-4 rounded-xl glass">
+      <FileText className="w-5 h-5 text-muted-foreground" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm truncate">{file.name}</div>
+        <div className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+      </div>
+      <button type="button" onClick={() => onChange(null)} className="p-2 rounded-lg hover:bg-white/10">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  ) : (
+    <label className="flex flex-col items-center justify-center p-6 rounded-xl glass border-2 border-dashed border-border cursor-pointer hover:bg-white/5 transition-colors">
+      <UploadIcon className="w-5 h-5 text-muted-foreground mb-2" />
+      <span className="text-sm">Click to choose a file</span>
+      <span className="text-xs text-muted-foreground mt-1 text-center">{hint ?? "PDF, DOCX, image — up to 20MB"}</span>
+      <input type="file" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+    </label>
   );
 }
 

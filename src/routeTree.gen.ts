@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UploadRouteImport } from './routes/upload'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CourseCodeRouteImport } from './routes/course.$code'
 
 const UploadRoute = UploadRouteImport.update({
   id: '/upload',
@@ -23,6 +25,11 @@ const UploadRoute = UploadRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -40,43 +47,78 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CourseCodeRoute = CourseCodeRouteImport.update({
+  id: '/course/$code',
+  path: '/course/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
   '/upload': typeof UploadRoute
+  '/course/$code': typeof CourseCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
   '/upload': typeof UploadRoute
+  '/course/$code': typeof CourseCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
   '/upload': typeof UploadRoute
+  '/course/$code': typeof CourseCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/auth' | '/profile' | '/upload'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/courses'
+    | '/profile'
+    | '/upload'
+    | '/course/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/auth' | '/profile' | '/upload'
-  id: '__root__' | '/' | '/admin' | '/auth' | '/profile' | '/upload'
+  to:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/courses'
+    | '/profile'
+    | '/upload'
+    | '/course/$code'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/courses'
+    | '/profile'
+    | '/upload'
+    | '/course/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  CoursesRoute: typeof CoursesRoute
   ProfileRoute: typeof ProfileRoute
   UploadRoute: typeof UploadRoute
+  CourseCodeRoute: typeof CourseCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -93,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -116,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/course/$code': {
+      id: '/course/$code'
+      path: '/course/$code'
+      fullPath: '/course/$code'
+      preLoaderRoute: typeof CourseCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -123,8 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  CoursesRoute: CoursesRoute,
   ProfileRoute: ProfileRoute,
   UploadRoute: UploadRoute,
+  CourseCodeRoute: CourseCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

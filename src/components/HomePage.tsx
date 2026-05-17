@@ -3,15 +3,8 @@ import {
   Sparkles,
   Search,
   Upload,
-  TrendingUp,
   BookOpen,
   Cpu,
-  Calculator,
-  Briefcase,
-  Beaker,
-  Languages,
-  Scale,
-  HeartPulse,
   FileText,
   Download,
   Heart,
@@ -23,30 +16,20 @@ import {
   GraduationCap,
   Crown,
   Flame,
-  Zap,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
-
-const departments = [
-  { name: "CSE", full: "Computer Science", icon: Cpu, count: 1240, hue: "from-violet-500/30 to-fuchsia-500/30" },
-  { name: "EEE", full: "Electrical Eng.", icon: Zap, count: 842, hue: "from-cyan-500/30 to-blue-500/30" },
-  { name: "BBA", full: "Business Admin.", icon: Briefcase, count: 967, hue: "from-pink-500/30 to-rose-500/30" },
-  { name: "MATH", full: "Mathematics", icon: Calculator, count: 318, hue: "from-amber-500/30 to-orange-500/30" },
-  { name: "PHR", full: "Pharmacy", icon: HeartPulse, count: 445, hue: "from-emerald-500/30 to-teal-500/30" },
-  { name: "CHEM", full: "Chemistry", icon: Beaker, count: 226, hue: "from-lime-500/30 to-green-500/30" },
-  { name: "ENG", full: "English", icon: Languages, count: 384, hue: "from-indigo-500/30 to-violet-500/30" },
-  { name: "LAW", full: "Law", icon: Scale, count: 192, hue: "from-rose-500/30 to-red-500/30" },
-];
+import { CSE_COURSES } from "@/lib/cse-courses";
 
 const trending = [
   { code: "CSE 2215", title: "Data Structures — Final 2024", type: "Final", trimester: "Spring 2024", downloads: 2340, likes: 412, teacher: "Dr. Mahmud" },
-  { code: "EEE 2103", title: "Circuit Analysis — Mid Term", type: "Mid", trimester: "Fall 2023", downloads: 1820, likes: 298, teacher: "Prof. Rahman" },
   { code: "CSE 3411", title: "DBMS — Solved CT Bundle", type: "CT", trimester: "Summer 2024", downloads: 1660, likes: 376, teacher: "Ms. Tasnim" },
-  { code: "BBA 1101", title: "Principles of Mgmt — Assignment", type: "Assignment", trimester: "Spring 2024", downloads: 1402, likes: 211, teacher: "Mr. Karim" },
-  { code: "MATH 2183", title: "Linear Algebra — Final + Solution", type: "Final", trimester: "Fall 2023", downloads: 1290, likes: 256, teacher: "Dr. Hasan" },
-  { code: "CSE 4495", title: "Machine Learning — Viva Notes", type: "Viva", trimester: "Spring 2024", downloads: 1184, likes: 332, teacher: "Dr. Ahmed" },
+  { code: "CSE 4495", title: "Machine Learning — Viva Notes", type: "Final", trimester: "Spring 2024", downloads: 1184, likes: 332, teacher: "Dr. Ahmed" },
+  { code: "CSE 3431", title: "Computer Networks — Mid", type: "Mid", trimester: "Fall 2023", downloads: 1402, likes: 211, teacher: "Mr. Karim" },
+  { code: "CSE 3521", title: "Operating Systems — Final", type: "Final", trimester: "Fall 2023", downloads: 1290, likes: 256, teacher: "Dr. Hasan" },
+  { code: "CSE 2319", title: "Algorithms — Assignment Pack", type: "Assignment", trimester: "Spring 2024", downloads: 980, likes: 198, teacher: "Dr. Rahman" },
 ];
 
 const contributors = [
@@ -62,8 +45,6 @@ const typeColors: Record<string, string> = {
   Mid: "from-cyan-500 to-blue-500",
   CT: "from-amber-500 to-orange-500",
   Assignment: "from-emerald-500 to-teal-500",
-  Viva: "from-pink-500 to-rose-500",
-  Lab: "from-lime-500 to-green-500",
 };
 
 function Navbar() {
@@ -83,10 +64,10 @@ function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          <a href="#browse" className="hover:text-foreground transition-colors">Browse</a>
+          <Link to="/courses" className="hover:text-foreground transition-colors">Courses</Link>
           <a href="#trending" className="hover:text-foreground transition-colors">Trending</a>
           <a href="#contributors" className="hover:text-foreground transition-colors">Leaderboard</a>
-          <a href="#departments" className="hover:text-foreground transition-colors">Departments</a>
+          <Link to="/upload" className="hover:text-foreground transition-colors">Upload</Link>
         </div>
 
         <AuthArea />
@@ -144,6 +125,19 @@ function FloatingOrbs() {
 }
 
 function Hero() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  const suggestions = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return [];
+    return CSE_COURSES.filter((c) => c.code.toLowerCase().includes(s) || c.title.toLowerCase().includes(s)).slice(0, 6);
+  }, [q]);
+
+  const goToFirst = () => {
+    if (suggestions[0]) navigate({ to: "/course/$code", params: { code: suggestions[0].code.replace(/\s+/g, "-") } });
+    else navigate({ to: "/courses" });
+  };
+
   return (
     <section className="relative pt-36 pb-24 px-4 sm:px-6">
       <div className="absolute inset-0 grid-bg -z-10" />
@@ -157,7 +151,7 @@ function Hero() {
           className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-muted-foreground mb-8"
         >
           <Sparkles className="w-3.5 h-3.5 text-[oklch(0.82_0.18_200)]" />
-          <span>Built by UIU students, for UIU students</span>
+          <span>Built by UIU CSE students, for UIU CSE students</span>
           <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
           <span className="text-foreground">v1.0</span>
         </motion.div>
@@ -168,7 +162,7 @@ function Hero() {
           transition={{ duration: 0.7, delay: 0.1 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight"
         >
-          Every <span className="gradient-text">question</span>
+          Every <span className="gradient-text">CSE question</span>
           <br /> you'll ever need.
         </motion.h1>
 
@@ -178,8 +172,7 @@ function Hero() {
           transition={{ duration: 0.6, delay: 0.25 }}
           className="mt-6 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto"
         >
-          A community-curated archive of CT, Mid, Final, Assignment & Viva
-          materials across every UIU department. Search, preview, download — instantly.
+          CT, Mid, Final & Assignment papers for every UIU CSE course — organized by trimester, with solution PDFs and instant preview.
         </motion.p>
 
         {/* Search */}
@@ -187,7 +180,7 @@ function Hero() {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-10 max-w-2xl mx-auto"
+          className="mt-10 max-w-2xl mx-auto relative"
         >
           <div className="relative group">
             <div className="absolute -inset-0.5 gradient-bg rounded-2xl opacity-60 blur-md group-hover:opacity-100 transition duration-500" />
@@ -195,22 +188,44 @@ function Hero() {
               <Search className="w-5 h-5 text-muted-foreground shrink-0" />
               <input
                 type="text"
-                placeholder="Try 'CSE 2215 final' or 'circuit analysis'…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") goToFirst(); }}
+                placeholder="Try 'CSE 2215' or 'Data Structures'…"
                 className="flex-1 bg-transparent outline-none text-sm sm:text-base placeholder:text-muted-foreground"
               />
-              <kbd className="hidden sm:inline-flex items-center gap-1 text-[10px] text-muted-foreground glass rounded-md px-2 py-1">
-                <Sparkles className="w-3 h-3" /> AI
-              </kbd>
-              <button className="text-sm font-medium px-4 py-2 rounded-xl gradient-bg text-background">
+              <button onClick={goToFirst} className="text-sm font-medium px-4 py-2 rounded-xl gradient-bg text-background">
                 Search
               </button>
             </div>
           </div>
+
+          {suggestions.length > 0 && (
+            <div className="absolute left-0 right-0 mt-2 glass-card overflow-hidden text-left z-20">
+              {suggestions.map((c) => (
+                <Link
+                  key={c.code}
+                  to="/course/$code"
+                  params={{ code: c.code.replace(/\s+/g, "-") }}
+                  className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-white/5 border-b border-border last:border-0"
+                >
+                  <span className="text-sm"><span className="font-mono text-muted-foreground mr-2">{c.code}</span>{c.title}</span>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+              ))}
+            </div>
+          )}
+
           <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
-            {["CSE 2215", "EEE 2103", "Mid 2024", "Solved CTs", "Pharmacy"].map((t) => (
-              <button key={t} className="glass rounded-full px-3 py-1 text-muted-foreground hover:text-foreground transition-colors">
+            {["CSE 2215", "CSE 3411", "CSE 3431", "CSE 3521", "CSE 4495"].map((t) => (
+              <Link
+                key={t}
+                to="/course/$code"
+                params={{ code: t.replace(/\s+/g, "-") }}
+                className="glass rounded-full px-3 py-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
                 {t}
-              </button>
+              </Link>
             ))}
           </div>
         </motion.div>
@@ -223,10 +238,10 @@ function Hero() {
           className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto"
         >
           {[
-            { v: "12,400+", l: "Questions" },
-            { v: "8", l: "Departments" },
-            { v: "3,200+", l: "Active Students" },
-            { v: "98.4%", l: "Approval Rate" },
+            { v: `${CSE_COURSES.length}`, l: "CSE Courses" },
+            { v: "CT/Mid/Final", l: "Paper types" },
+            { v: "Solutions", l: "Included" },
+            { v: "Free", l: "Forever" },
           ].map((s) => (
             <div key={s.l} className="glass-card p-5">
               <div className="text-2xl sm:text-3xl font-bold gradient-text font-display">{s.v}</div>
@@ -239,49 +254,71 @@ function Hero() {
   );
 }
 
-function Departments() {
+function Courses() {
+  const [q, setQ] = useState("");
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    const list = s ? CSE_COURSES.filter((c) => c.code.toLowerCase().includes(s) || c.title.toLowerCase().includes(s)) : CSE_COURSES;
+    return list.slice(0, 12);
+  }, [q]);
+
   return (
-    <section id="departments" className="relative py-24 px-4 sm:px-6">
+    <section id="courses" className="relative py-24 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-end justify-between mb-10 flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[oklch(0.82_0.18_200)] mb-3">
-              <BookOpen className="w-4 h-4" /> Browse by department
+              <Cpu className="w-4 h-4" /> CSE Department
             </div>
-            <h2 className="text-3xl sm:text-5xl font-bold">Pick your <span className="gradient-text">discipline</span></h2>
+            <h2 className="text-3xl sm:text-5xl font-bold">Pick your <span className="gradient-text">course</span></h2>
           </div>
-          <a href="#" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
-            View all <ArrowRight className="w-4 h-4" />
-          </a>
+          <Link to="/courses" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+            View all {CSE_COURSES.length} <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="glass-card flex items-center gap-3 px-5 py-3 mb-6 max-w-2xl">
+          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search course code or name…"
+            className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+          />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {departments.map((d, i) => (
-            <motion.a
-              key={d.name}
-              href="#"
-              initial={{ opacity: 0, y: 20 }}
+          {filtered.map((c, i) => (
+            <motion.div
+              key={c.code}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.05 }}
-              whileHover={{ y: -4 }}
-              className="group relative glass-card p-6 overflow-hidden"
+              transition={{ duration: 0.35, delay: Math.min(i * 0.03, 0.3) }}
             >
-              <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full bg-gradient-to-br ${d.hue} blur-2xl opacity-50 group-hover:opacity-100 transition-opacity`} />
-              <div className="relative">
-                <div className="w-11 h-11 rounded-xl glass flex items-center justify-center mb-4">
-                  <d.icon className="w-5 h-5" />
+              <Link
+                to="/course/$code"
+                params={{ code: c.code.replace(/\s+/g, "-") }}
+                className="group relative glass-card p-5 overflow-hidden block h-full"
+              >
+                <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-xl glass flex items-center justify-center mb-4">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground">{c.code}</div>
+                  <div className="font-semibold text-sm mt-1 leading-snug">{c.title}</div>
+                  <div className="mt-4 flex items-center justify-end">
+                    <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </div>
-                <div className="font-display font-bold text-lg">{d.name}</div>
-                <div className="text-xs text-muted-foreground">{d.full}</div>
-                <div className="mt-4 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{d.count.toLocaleString()} files</span>
-                  <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-            </motion.a>
+              </Link>
+            </motion.div>
           ))}
         </div>
+        {filtered.length === 0 && (
+          <div className="glass-card p-10 text-center text-muted-foreground text-sm mt-4">No course matches "{q}".</div>
+        )}
       </div>
     </section>
   );
@@ -413,9 +450,9 @@ function CTA() {
               <Link to="/upload" className="px-6 py-3 rounded-xl gradient-bg text-background font-medium inline-flex items-center gap-2">
                 <Upload className="w-4 h-4" /> Upload now
               </Link>
-              <a href="#trending" className="px-6 py-3 rounded-xl glass font-medium inline-flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" /> See guidelines
-              </a>
+              <Link to="/courses" className="px-6 py-3 rounded-xl glass font-medium inline-flex items-center gap-2">
+                <BookOpen className="w-4 h-4" /> Browse courses
+              </Link>
             </div>
           </div>
         </div>
@@ -486,7 +523,7 @@ export function HomePage() {
       <Navbar />
       <main>
         <Hero />
-        <Departments />
+        <Courses />
         <Trending />
         <Contributors />
         <CTA />

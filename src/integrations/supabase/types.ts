@@ -50,6 +50,69 @@ export type Database = {
         }
         Relationships: []
       }
+      uploads: {
+        Row: {
+          course_code: string
+          created_at: string
+          department: string | null
+          description: string | null
+          downloads: number
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_url: string
+          id: string
+          likes: number
+          status: string
+          teacher: string | null
+          title: string
+          trimester: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_code: string
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          downloads?: number
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          likes?: number
+          status?: string
+          teacher?: string | null
+          title: string
+          trimester?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course_code?: string
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          downloads?: number
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          likes?: number
+          status?: string
+          teacher?: string | null
+          title?: string
+          trimester?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

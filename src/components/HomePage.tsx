@@ -410,12 +410,12 @@ function CTA() {
               Drop your CTs, mids, finals or notes. Admins review fast — your name on the leaderboard, your karma in the cloud.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <button className="px-6 py-3 rounded-xl gradient-bg text-background font-medium inline-flex items-center gap-2">
+              <Link to="/upload" className="px-6 py-3 rounded-xl gradient-bg text-background font-medium inline-flex items-center gap-2">
                 <Upload className="w-4 h-4" /> Upload now
-              </button>
-              <button className="px-6 py-3 rounded-xl glass font-medium inline-flex items-center gap-2">
+              </Link>
+              <a href="#trending" className="px-6 py-3 rounded-xl glass font-medium inline-flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" /> See guidelines
-              </button>
+              </a>
             </div>
           </div>
         </div>

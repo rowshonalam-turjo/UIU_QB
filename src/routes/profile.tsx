@@ -106,9 +106,15 @@ function ProfilePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="glass-card p-7 sm:p-10">
             <div className="flex items-center gap-5 flex-wrap">
-              <div className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center text-2xl font-display font-bold text-background glow overflow-hidden">
-                {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : initials}
-              </div>
+              <label className="relative group cursor-pointer">
+                <div className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center text-2xl font-display font-bold text-background glow overflow-hidden">
+                  {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : initials}
+                </div>
+                <div className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  {uploadingAvatar ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Camera className="w-5 h-5 text-white" />}
+                </div>
+                <input type="file" accept="image/*" className="hidden" disabled={uploadingAvatar} onChange={handleAvatarFile} />
+              </label>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold truncate">{fullName || "Anonymous student"}</h1>
@@ -119,6 +125,7 @@ function ProfilePage() {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="text-xs text-muted-foreground mt-1">Click your avatar to upload a new photo</p>
               </div>
               <button onClick={handleLogout} className="px-4 py-2 rounded-xl glass text-sm inline-flex items-center gap-2 hover:bg-destructive/20 hover:text-destructive transition-colors">
                 <LogOut className="w-4 h-4" /> Sign out
@@ -139,9 +146,6 @@ function ProfilePage() {
                   <option value="">Select…</option>
                   {semesters.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-              </Field>
-              <Field label="Avatar URL (optional)" full>
-                <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} className="input" placeholder="https://…" />
               </Field>
 
               <div className="sm:col-span-2 flex items-center justify-between flex-wrap gap-3 pt-2">

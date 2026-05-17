@@ -63,6 +63,9 @@ export type Database = {
           file_url: string
           id: string
           likes: number
+          solution_name: string | null
+          solution_path: string | null
+          solution_url: string | null
           status: string
           teacher: string | null
           title: string
@@ -83,6 +86,9 @@ export type Database = {
           file_url: string
           id?: string
           likes?: number
+          solution_name?: string | null
+          solution_path?: string | null
+          solution_url?: string | null
           status?: string
           teacher?: string | null
           title: string
@@ -103,6 +109,9 @@ export type Database = {
           file_url?: string
           id?: string
           likes?: number
+          solution_name?: string | null
+          solution_path?: string | null
+          solution_url?: string | null
           status?: string
           teacher?: string | null
           title?: string

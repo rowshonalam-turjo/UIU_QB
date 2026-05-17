@@ -3,15 +3,8 @@ import {
   Sparkles,
   Search,
   Upload,
-  TrendingUp,
   BookOpen,
   Cpu,
-  Calculator,
-  Briefcase,
-  Beaker,
-  Languages,
-  Scale,
-  HeartPulse,
   FileText,
   Download,
   Heart,
@@ -23,30 +16,20 @@ import {
   GraduationCap,
   Crown,
   Flame,
-  Zap,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
-
-const departments = [
-  { name: "CSE", full: "Computer Science", icon: Cpu, count: 1240, hue: "from-violet-500/30 to-fuchsia-500/30" },
-  { name: "EEE", full: "Electrical Eng.", icon: Zap, count: 842, hue: "from-cyan-500/30 to-blue-500/30" },
-  { name: "BBA", full: "Business Admin.", icon: Briefcase, count: 967, hue: "from-pink-500/30 to-rose-500/30" },
-  { name: "MATH", full: "Mathematics", icon: Calculator, count: 318, hue: "from-amber-500/30 to-orange-500/30" },
-  { name: "PHR", full: "Pharmacy", icon: HeartPulse, count: 445, hue: "from-emerald-500/30 to-teal-500/30" },
-  { name: "CHEM", full: "Chemistry", icon: Beaker, count: 226, hue: "from-lime-500/30 to-green-500/30" },
-  { name: "ENG", full: "English", icon: Languages, count: 384, hue: "from-indigo-500/30 to-violet-500/30" },
-  { name: "LAW", full: "Law", icon: Scale, count: 192, hue: "from-rose-500/30 to-red-500/30" },
-];
+import { CSE_COURSES } from "@/lib/cse-courses";
 
 const trending = [
   { code: "CSE 2215", title: "Data Structures — Final 2024", type: "Final", trimester: "Spring 2024", downloads: 2340, likes: 412, teacher: "Dr. Mahmud" },
-  { code: "EEE 2103", title: "Circuit Analysis — Mid Term", type: "Mid", trimester: "Fall 2023", downloads: 1820, likes: 298, teacher: "Prof. Rahman" },
   { code: "CSE 3411", title: "DBMS — Solved CT Bundle", type: "CT", trimester: "Summer 2024", downloads: 1660, likes: 376, teacher: "Ms. Tasnim" },
-  { code: "BBA 1101", title: "Principles of Mgmt — Assignment", type: "Assignment", trimester: "Spring 2024", downloads: 1402, likes: 211, teacher: "Mr. Karim" },
-  { code: "MATH 2183", title: "Linear Algebra — Final + Solution", type: "Final", trimester: "Fall 2023", downloads: 1290, likes: 256, teacher: "Dr. Hasan" },
-  { code: "CSE 4495", title: "Machine Learning — Viva Notes", type: "Viva", trimester: "Spring 2024", downloads: 1184, likes: 332, teacher: "Dr. Ahmed" },
+  { code: "CSE 4495", title: "Machine Learning — Viva Notes", type: "Final", trimester: "Spring 2024", downloads: 1184, likes: 332, teacher: "Dr. Ahmed" },
+  { code: "CSE 3431", title: "Computer Networks — Mid", type: "Mid", trimester: "Fall 2023", downloads: 1402, likes: 211, teacher: "Mr. Karim" },
+  { code: "CSE 3521", title: "Operating Systems — Final", type: "Final", trimester: "Fall 2023", downloads: 1290, likes: 256, teacher: "Dr. Hasan" },
+  { code: "CSE 2319", title: "Algorithms — Assignment Pack", type: "Assignment", trimester: "Spring 2024", downloads: 980, likes: 198, teacher: "Dr. Rahman" },
 ];
 
 const contributors = [
@@ -62,8 +45,6 @@ const typeColors: Record<string, string> = {
   Mid: "from-cyan-500 to-blue-500",
   CT: "from-amber-500 to-orange-500",
   Assignment: "from-emerald-500 to-teal-500",
-  Viva: "from-pink-500 to-rose-500",
-  Lab: "from-lime-500 to-green-500",
 };
 
 function Navbar() {

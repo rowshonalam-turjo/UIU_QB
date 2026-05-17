@@ -450,9 +450,9 @@ function CTA() {
               <Link to="/upload" className="px-6 py-3 rounded-xl gradient-bg text-background font-medium inline-flex items-center gap-2">
                 <Upload className="w-4 h-4" /> Upload now
               </Link>
-              <a href="#trending" className="px-6 py-3 rounded-xl glass font-medium inline-flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" /> See guidelines
-              </a>
+              <Link to="/courses" className="px-6 py-3 rounded-xl glass font-medium inline-flex items-center gap-2">
+                <BookOpen className="w-4 h-4" /> Browse courses
+              </Link>
             </div>
           </div>
         </div>
@@ -523,7 +523,7 @@ export function HomePage() {
       <Navbar />
       <main>
         <Hero />
-        <Departments />
+        <Courses />
         <Trending />
         <Contributors />
         <CTA />

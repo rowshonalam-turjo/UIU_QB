@@ -161,6 +161,8 @@ function ProfilePage() {
               </div>
             </form>
           </div>
+
+          <MyUploads userId={user.id} />
         </motion.div>
       </div>
 

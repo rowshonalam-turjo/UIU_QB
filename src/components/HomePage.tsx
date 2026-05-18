@@ -18,27 +18,23 @@ import {
   Flame,
 } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
 import { CSE_COURSES } from "@/lib/cse-courses";
+import { supabase } from "@/integrations/supabase/client";
 
-const trending = [
-  { code: "CSE 2215", title: "Data Structures — Final 2024", type: "Final", trimester: "Spring 2024", downloads: 2340, likes: 412, teacher: "Dr. Mahmud" },
-  { code: "CSE 3411", title: "DBMS — Solved CT Bundle", type: "CT", trimester: "Summer 2024", downloads: 1660, likes: 376, teacher: "Ms. Tasnim" },
-  { code: "CSE 4495", title: "Machine Learning — Viva Notes", type: "Final", trimester: "Spring 2024", downloads: 1184, likes: 332, teacher: "Dr. Ahmed" },
-  { code: "CSE 3431", title: "Computer Networks — Mid", type: "Mid", trimester: "Fall 2023", downloads: 1402, likes: 211, teacher: "Mr. Karim" },
-  { code: "CSE 3521", title: "Operating Systems — Final", type: "Final", trimester: "Fall 2023", downloads: 1290, likes: 256, teacher: "Dr. Hasan" },
-  { code: "CSE 2319", title: "Algorithms — Assignment Pack", type: "Assignment", trimester: "Spring 2024", downloads: 980, likes: 198, teacher: "Dr. Rahman" },
-];
-
-const contributors = [
-  { name: "Tanvir Hossain", id: "0112320001", uploads: 47, rep: 9820, badge: "Legend" },
-  { name: "Sumaiya Akter", id: "0112310045", uploads: 39, rep: 7610, badge: "Elite" },
-  { name: "Rafsan Jani", id: "0112320118", uploads: 34, rep: 6940, badge: "Elite" },
-  { name: "Mehedi Hasan", id: "0112310087", uploads: 28, rep: 5820, badge: "Pro" },
-  { name: "Nusrat Jahan", id: "0112330012", uploads: 25, rep: 5210, badge: "Pro" },
-];
+type TrendingRow = {
+  id: string;
+  course_code: string;
+  title: string;
+  type: string;
+  trimester: string | null;
+  teacher: string | null;
+  downloads: number;
+  likes: number;
+  file_url: string;
+};
 
 const typeColors: Record<string, string> = {
   Final: "from-fuchsia-500 to-violet-500",

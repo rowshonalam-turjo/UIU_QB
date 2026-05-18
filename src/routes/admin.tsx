@@ -156,6 +156,8 @@ function AdminPage() {
               </div>
             )}
           </div>
+
+          <UploadModeration />
         </motion.div>
       </div>
     </div>

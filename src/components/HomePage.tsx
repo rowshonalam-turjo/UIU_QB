@@ -14,31 +14,27 @@ import {
   Twitter,
   Linkedin,
   GraduationCap,
-  Crown,
+  
   Flame,
 } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
 import { CSE_COURSES } from "@/lib/cse-courses";
+import { supabase } from "@/integrations/supabase/client";
 
-const trending = [
-  { code: "CSE 2215", title: "Data Structures — Final 2024", type: "Final", trimester: "Spring 2024", downloads: 2340, likes: 412, teacher: "Dr. Mahmud" },
-  { code: "CSE 3411", title: "DBMS — Solved CT Bundle", type: "CT", trimester: "Summer 2024", downloads: 1660, likes: 376, teacher: "Ms. Tasnim" },
-  { code: "CSE 4495", title: "Machine Learning — Viva Notes", type: "Final", trimester: "Spring 2024", downloads: 1184, likes: 332, teacher: "Dr. Ahmed" },
-  { code: "CSE 3431", title: "Computer Networks — Mid", type: "Mid", trimester: "Fall 2023", downloads: 1402, likes: 211, teacher: "Mr. Karim" },
-  { code: "CSE 3521", title: "Operating Systems — Final", type: "Final", trimester: "Fall 2023", downloads: 1290, likes: 256, teacher: "Dr. Hasan" },
-  { code: "CSE 2319", title: "Algorithms — Assignment Pack", type: "Assignment", trimester: "Spring 2024", downloads: 980, likes: 198, teacher: "Dr. Rahman" },
-];
-
-const contributors = [
-  { name: "Tanvir Hossain", id: "0112320001", uploads: 47, rep: 9820, badge: "Legend" },
-  { name: "Sumaiya Akter", id: "0112310045", uploads: 39, rep: 7610, badge: "Elite" },
-  { name: "Rafsan Jani", id: "0112320118", uploads: 34, rep: 6940, badge: "Elite" },
-  { name: "Mehedi Hasan", id: "0112310087", uploads: 28, rep: 5820, badge: "Pro" },
-  { name: "Nusrat Jahan", id: "0112330012", uploads: 25, rep: 5210, badge: "Pro" },
-];
+type TrendingRow = {
+  id: string;
+  course_code: string;
+  title: string;
+  type: string;
+  trimester: string | null;
+  teacher: string | null;
+  downloads: number;
+  likes: number;
+  file_url: string;
+};
 
 const typeColors: Record<string, string> = {
   Final: "from-fuchsia-500 to-violet-500",
@@ -66,7 +62,6 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <Link to="/courses" className="hover:text-foreground transition-colors">Courses</Link>
           <a href="#trending" className="hover:text-foreground transition-colors">Trending</a>
-          <a href="#contributors" className="hover:text-foreground transition-colors">Leaderboard</a>
           <Link to="/upload" className="hover:text-foreground transition-colors">Upload</Link>
         </div>
 
@@ -325,104 +320,77 @@ function Courses() {
 }
 
 function Trending() {
+  const [items, setItems] = useState<TrendingRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("uploads")
+        .select("id, course_code, title, type, trimester, teacher, downloads, likes, file_url")
+        .eq("status", "approved")
+        .order("downloads", { ascending: false })
+        .limit(6);
+      setItems((data ?? []) as TrendingRow[]);
+      setLoading(false);
+    })();
+  }, []);
+
   return (
     <section id="trending" className="relative py-24 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-end justify-between mb-10 flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[oklch(0.72_0.25_350)] mb-3">
-              <Flame className="w-4 h-4" /> Trending this week
+              <Flame className="w-4 h-4" /> Trending
             </div>
             <h2 className="text-3xl sm:text-5xl font-bold">What's <span className="gradient-text">hot</span> right now</h2>
           </div>
-          <a href="#" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
-            See all uploads <ArrowRight className="w-4 h-4" />
-          </a>
+          <Link to="/courses" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+            Browse courses <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {trending.map((q, i) => (
-            <motion.div
-              key={q.code + q.title}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
-              whileHover={{ y: -6 }}
-              className="group glass-card p-6 relative overflow-hidden"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className={`text-[10px] uppercase tracking-[0.15em] font-semibold px-2.5 py-1 rounded-md bg-gradient-to-r ${typeColors[q.type] ?? "from-violet-500 to-fuchsia-500"} text-background`}>
-                  {q.type}
-                </span>
-                <span className="text-xs text-muted-foreground font-mono">{q.code}</span>
-              </div>
-
-              <h3 className="text-lg font-semibold leading-tight">{q.title}</h3>
-              <p className="text-xs text-muted-foreground mt-1.5">{q.teacher} · {q.trimester}</p>
-
-              <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4">
-                <div className="flex items-center gap-4">
-                  <span className="inline-flex items-center gap-1.5"><Download className="w-3.5 h-3.5" /> {q.downloads.toLocaleString()}</span>
-                  <span className="inline-flex items-center gap-1.5"><Heart className="w-3.5 h-3.5" /> {q.likes}</span>
-                  <span className="inline-flex items-center gap-1.5"><MessageSquare className="w-3.5 h-3.5" /> {Math.floor(q.likes / 6)}</span>
-                </div>
-                <FileText className="w-4 h-4 group-hover:text-foreground transition-colors" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Contributors() {
-  return (
-    <section id="contributors" className="relative py-24 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.2em] text-[oklch(0.7_0.25_295)] mb-3">
-            <Crown className="w-4 h-4" /> Leaderboard
+        {loading ? (
+          <div className="glass-card p-10 text-center text-muted-foreground text-sm">Loading…</div>
+        ) : items.length === 0 ? (
+          <div className="glass-card p-10 text-center text-muted-foreground text-sm">
+            No approved uploads yet. <Link to="/upload" className="gradient-text font-medium">Be the first to share →</Link>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-bold">Top <span className="gradient-text">contributors</span></h2>
-          <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-            The students keeping this archive alive. Earn reputation with every approved upload.
-          </p>
-        </div>
-
-        <div className="glass-card overflow-hidden">
-          {contributors.map((c, i) => (
-            <motion.div
-              key={c.id}
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.06 }}
-              className="flex items-center gap-4 px-5 sm:px-7 py-5 border-b border-border last:border-0 hover:bg-white/5 transition-colors"
-            >
-              <div className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-display font-bold text-sm ${i === 0 ? "gradient-bg text-background glow" : "glass text-muted-foreground"}`}>
-                {i + 1}
-              </div>
-              <div className="shrink-0 w-11 h-11 rounded-full gradient-bg flex items-center justify-center text-background font-bold text-sm">
-                {c.name.split(" ").map(n => n[0]).join("")}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold truncate">{c.name}</div>
-                <div className="text-xs text-muted-foreground font-mono">{c.id}</div>
-              </div>
-              <div className="hidden sm:block text-right">
-                <div className="text-xs text-muted-foreground">Uploads</div>
-                <div className="font-display font-bold">{c.uploads}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-muted-foreground">Reputation</div>
-                <div className="font-display font-bold gradient-text">{c.rep.toLocaleString()}</div>
-              </div>
-              <span className="hidden md:inline text-[10px] uppercase tracking-wider px-2.5 py-1 glass rounded-md">{c.badge}</span>
-            </motion.div>
-          ))}
-        </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {items.map((q, i) => (
+              <motion.a
+                key={q.id}
+                href={q.file_url}
+                target="_blank"
+                rel="noreferrer"
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.06 }}
+                whileHover={{ y: -6 }}
+                className="group glass-card p-6 relative overflow-hidden block"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className={`text-[10px] uppercase tracking-[0.15em] font-semibold px-2.5 py-1 rounded-md bg-gradient-to-r ${typeColors[q.type] ?? "from-violet-500 to-fuchsia-500"} text-background`}>
+                    {q.type}
+                  </span>
+                  <span className="text-xs text-muted-foreground font-mono">{q.course_code}</span>
+                </div>
+                <h3 className="text-lg font-semibold leading-tight">{q.title}</h3>
+                <p className="text-xs text-muted-foreground mt-1.5">{q.teacher ?? "—"} · {q.trimester ?? "—"}</p>
+                <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4">
+                  <div className="flex items-center gap-4">
+                    <span className="inline-flex items-center gap-1.5"><Download className="w-3.5 h-3.5" /> {q.downloads}</span>
+                    <span className="inline-flex items-center gap-1.5"><Heart className="w-3.5 h-3.5" /> {q.likes}</span>
+                  </div>
+                  <FileText className="w-4 h-4 group-hover:text-foreground transition-colors" />
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -525,7 +493,7 @@ export function HomePage() {
         <Hero />
         <Courses />
         <Trending />
-        <Contributors />
+        
         <CTA />
       </main>
       <Footer />

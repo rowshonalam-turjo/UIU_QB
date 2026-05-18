@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, GraduationCap, Loader2, ShieldCheck, LogOut, Camera } from "lucide-react";
+import { ArrowLeft, GraduationCap, Loader2, ShieldCheck, LogOut, Camera, FileText, Clock, CheckCircle2, XCircle, Trash2, Download } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -161,6 +161,8 @@ function ProfilePage() {
               </div>
             </form>
           </div>
+
+          <MyUploads userId={user.id} />
         </motion.div>
       </div>
 
@@ -178,5 +180,92 @@ function Field({ label, full, children }: { label: string; full?: boolean; child
       <span className="text-xs text-muted-foreground mb-1.5 block">{label}</span>
       {children}
     </label>
+  );
+}
+
+type UploadRow = {
+  id: string;
+  title: string;
+  course_code: string;
+  type: string;
+  trimester: string | null;
+  status: string;
+  file_url: string;
+  file_name: string;
+  created_at: string;
+};
+
+function MyUploads({ userId }: { userId: string }) {
+  const [rows, setRows] = useState<UploadRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("uploads")
+      .select("id, title, course_code, type, trimester, status, file_url, file_name, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    setRows((data ?? []) as UploadRow[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [userId]);
+
+  const remove = async (id: string) => {
+    if (!confirm("Delete this upload?")) return;
+    const { error } = await supabase.from("uploads").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted");
+    load();
+  };
+
+  const statusBadge = (s: string) => {
+    if (s === "approved") return <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-400 font-semibold"><CheckCircle2 className="w-3 h-3" /> Approved</span>;
+    if (s === "rejected") return <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-destructive/20 text-destructive font-semibold"><XCircle className="w-3 h-3" /> Rejected</span>;
+    return <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-amber-500/20 text-amber-400 font-semibold"><Clock className="w-3 h-3" /> Pending</span>;
+  };
+
+  return (
+    <div className="glass-card p-6 sm:p-8 mt-6">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h2 className="text-xl font-bold">My uploads</h2>
+          <p className="text-xs text-muted-foreground mt-1">Track the status of your contributions.</p>
+        </div>
+        <Link to="/upload" className="text-xs px-3 py-2 rounded-lg gradient-bg text-background font-medium">Upload new</Link>
+      </div>
+
+      {loading ? (
+        <div className="py-10 text-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" /></div>
+      ) : rows.length === 0 ? (
+        <div className="py-10 text-center text-sm text-muted-foreground">
+          <FileText className="w-8 h-8 mx-auto mb-3 opacity-40" />
+          You haven't uploaded anything yet.
+        </div>
+      ) : (
+        <div className="divide-y divide-border">
+          {rows.map((r) => (
+            <div key={r.id} className="py-4 flex items-center gap-3 flex-wrap">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium truncate">{r.title}</span>
+                  {statusBadge(r.status)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 font-mono">
+                  {r.course_code} · {r.type} {r.trimester ? `· ${r.trimester}` : ""}
+                </div>
+              </div>
+              <a href={r.file_url} target="_blank" rel="noreferrer" className="p-2 rounded-lg glass hover:bg-white/10" title="Open file">
+                <Download className="w-4 h-4" />
+              </a>
+              <button onClick={() => remove(r.id)} className="p-2 rounded-lg glass hover:bg-destructive/20 hover:text-destructive" title="Delete">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

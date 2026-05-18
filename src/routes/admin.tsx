@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShieldCheck, ShieldOff, Loader2, Search, Crown, Users } from "lucide-react";
+import { ArrowLeft, ShieldCheck, ShieldOff, Loader2, Search, Crown, Users, FileText, CheckCircle2, XCircle, Eye, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -156,6 +156,8 @@ function AdminPage() {
               </div>
             )}
           </div>
+
+          <UploadModeration />
         </motion.div>
       </div>
     </div>
@@ -167,6 +169,167 @@ function Stat({ label, value }: { label: string; value: number }) {
     <div className="glass-card px-5 py-3">
       <div className="text-xs text-muted-foreground uppercase tracking-wider">{label}</div>
       <div className="text-2xl font-display font-bold gradient-text">{value}</div>
+    </div>
+  );
+}
+
+type UploadReview = {
+  id: string;
+  user_id: string;
+  title: string;
+  course_code: string;
+  type: string;
+  trimester: string | null;
+  teacher: string | null;
+  description: string | null;
+  file_url: string;
+  file_name: string;
+  solution_url: string | null;
+  status: string;
+  created_at: string;
+  uploader_name?: string | null;
+  uploader_email?: string | null;
+};
+
+function UploadModeration() {
+  const [tab, setTab] = useState<"pending" | "approved" | "rejected">("pending");
+  const [rows, setRows] = useState<UploadReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState<UploadReview | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data: uploads } = await supabase
+      .from("uploads")
+      .select("id, user_id, title, course_code, type, trimester, teacher, description, file_url, file_name, solution_url, status, created_at")
+      .eq("status", tab)
+      .order("created_at", { ascending: false });
+    const list = (uploads ?? []) as UploadReview[];
+    const ids = Array.from(new Set(list.map((u) => u.user_id)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      list.forEach((u) => {
+        const p = map.get(u.user_id);
+        u.uploader_name = p?.full_name ?? null;
+        u.uploader_email = p?.email ?? null;
+      });
+    }
+    setRows(list);
+    setLoading(false);
+  }, [tab]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const setStatus = async (id: string, status: "approved" | "rejected") => {
+    const { error } = await supabase.from("uploads").update({ status }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(status === "approved" ? "Approved" : "Rejected");
+    setPreview(null);
+    load();
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Permanently delete this upload?")) return;
+    const { error } = await supabase.from("uploads").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted");
+    setPreview(null);
+    load();
+  };
+
+  return (
+    <div className="glass-card overflow-hidden mt-8">
+      <div className="p-5 border-b border-border flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <FileText className="w-4 h-4 text-muted-foreground" />
+          <h2 className="font-bold">Upload requests</h2>
+        </div>
+        <div className="flex items-center gap-1 glass rounded-lg p-1 text-xs">
+          {(["pending", "approved", "rejected"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-3 py-1.5 rounded-md capitalize transition-colors ${tab === t ? "gradient-bg text-background font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="p-12 text-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" /></div>
+      ) : rows.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">No {tab} uploads.</div>
+      ) : (
+        <div className="divide-y divide-border">
+          {rows.map((r) => (
+            <div key={r.id} className="px-4 sm:px-6 py-4 flex items-center gap-3 flex-wrap hover:bg-white/5">
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{r.title}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 font-mono">
+                  {r.course_code} · {r.type} {r.trimester ? `· ${r.trimester}` : ""} · by {r.uploader_name || r.uploader_email || "unknown"}
+                </div>
+              </div>
+              <button onClick={() => setPreview(r)} className="px-3 py-1.5 rounded-lg glass text-xs inline-flex items-center gap-1.5 hover:bg-white/10">
+                <Eye className="w-3.5 h-3.5" /> Preview
+              </button>
+              {tab !== "approved" && (
+                <button onClick={() => setStatus(r.id, "approved")} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs inline-flex items-center gap-1.5 hover:bg-emerald-500/30">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                </button>
+              )}
+              {tab !== "rejected" && (
+                <button onClick={() => setStatus(r.id, "rejected")} className="px-3 py-1.5 rounded-lg bg-destructive/20 text-destructive text-xs inline-flex items-center gap-1.5 hover:bg-destructive/30">
+                  <XCircle className="w-3.5 h-3.5" /> Reject
+                </button>
+              )}
+              <button onClick={() => remove(r.id)} className="p-1.5 rounded-lg glass hover:bg-destructive/20 hover:text-destructive" title="Delete">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {preview && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPreview(null)}>
+          <div className="glass-card w-full max-w-5xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 border-b border-border flex items-center justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <div className="font-bold truncate">{preview.title}</div>
+                <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {preview.course_code} · {preview.type} · {preview.uploader_email}
+                </div>
+                {preview.description && <div className="text-xs text-muted-foreground mt-2 max-w-2xl">{preview.description}</div>}
+              </div>
+              <div className="flex items-center gap-2">
+                {preview.status !== "approved" && (
+                  <button onClick={() => setStatus(preview.id, "approved")} className="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                  </button>
+                )}
+                {preview.status !== "rejected" && (
+                  <button onClick={() => setStatus(preview.id, "rejected")} className="px-3 py-2 rounded-lg bg-destructive/20 text-destructive text-xs font-medium inline-flex items-center gap-1.5">
+                    <XCircle className="w-3.5 h-3.5" /> Reject
+                  </button>
+                )}
+                <button onClick={() => setPreview(null)} className="px-3 py-2 rounded-lg glass text-xs">Close</button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto bg-black/40">
+              <iframe src={preview.file_url} title={preview.title} className="w-full h-[70vh]" />
+            </div>
+            {preview.solution_url && (
+              <div className="p-3 border-t border-border text-xs flex items-center justify-between">
+                <span className="text-muted-foreground">Solution attached</span>
+                <a href={preview.solution_url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-lg glass hover:bg-white/10">Open solution</a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

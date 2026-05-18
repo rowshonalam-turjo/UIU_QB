@@ -494,7 +494,7 @@ export function HomePage() {
         <Hero />
         <Courses />
         <Trending />
-        <Contributors />
+        
         <CTA />
       </main>
       <Footer />

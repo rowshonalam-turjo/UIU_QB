@@ -284,9 +284,15 @@ function MyUploads({ userId }: { userId: string }) {
               <a href={r.file_url} target="_blank" rel="noreferrer" className="p-2 rounded-lg glass hover:bg-white/10" title="Open file">
                 <Download className="w-4 h-4" />
               </a>
-              <button onClick={() => remove(r.id)} className="p-2 rounded-lg glass hover:bg-destructive/20 hover:text-destructive" title="Delete">
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {r.status === "pending" ? (
+                <button onClick={() => remove(r.id)} className="p-2 rounded-lg glass hover:bg-destructive/20 hover:text-destructive" title="Delete pending upload">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              ) : (
+                <span className="p-2 rounded-lg glass opacity-40 cursor-not-allowed" title="Only admins can remove approved or rejected uploads">
+                  <Lock className="w-4 h-4" />
+                </span>
+              )}
             </div>
           ))}
         </div>

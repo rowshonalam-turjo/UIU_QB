@@ -397,6 +397,112 @@ function Trending() {
   );
 }
 
+type LeaderRow = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; points: number; department: string | null };
+
+function Leaderboard() {
+  const [rows, setRows] = useState<LeaderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url, points, department")
+        .order("points", { ascending: false })
+        .limit(10);
+      setRows((data ?? []) as LeaderRow[]);
+      setLoading(false);
+    })();
+  }, []);
+
+  const podium = rows.slice(0, 3);
+  const rest = rows.slice(3);
+
+  return (
+    <section id="leaderboard" className="relative py-24 px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-amber-400 mb-3">
+            <Trophy className="w-4 h-4" /> Leaderboard
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-bold">Top <span className="gradient-text">contributors</span></h2>
+          <p className="text-sm text-muted-foreground mt-4 max-w-xl mx-auto">
+            Earn <span className="text-amber-400 font-semibold">+10 pts</span> for every approved upload. Climb the ranks, unlock badges.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="glass-card p-10 text-center text-muted-foreground text-sm">Loading…</div>
+        ) : rows.length === 0 ? (
+          <div className="glass-card p-10 text-center text-sm text-muted-foreground">
+            No contributors yet. <Link to="/upload" className="gradient-text font-medium">Be the first →</Link>
+          </div>
+        ) : (
+          <>
+            {podium.length > 0 && (
+              <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                {podium.map((u, i) => {
+                  const b = badgeFor(u.points);
+                  const heights = ["sm:mt-0", "sm:mt-6", "sm:mt-10"];
+                  const rank = i + 1;
+                  return (
+                    <motion.div
+                      key={u.id}
+                      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className={`glass-card p-6 text-center relative overflow-hidden ${heights[i]}`}
+                    >
+                      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${b.bg}`} />
+                      <div className="text-3xl mb-2">{["🥇", "🥈", "🥉"][i]}</div>
+                      <div className="w-16 h-16 mx-auto rounded-2xl gradient-bg flex items-center justify-center text-background font-bold text-lg overflow-hidden">
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || u.email || "?").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="font-semibold truncate mt-3">{u.full_name || (u.email?.split("@")[0]) || "Anonymous"}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">#{rank} · {u.department ?? "CSE"}</div>
+                      <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold">
+                        <Trophy className="w-3.5 h-3.5 text-amber-400" /> {u.points} pts
+                      </div>
+                      <div className={`mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-gradient-to-r ${b.bg} ${b.color} font-semibold`}>
+                        {b.emoji} {b.name}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+
+            {rest.length > 0 && (
+              <div className="glass-card divide-y divide-border">
+                {rest.map((u, i) => {
+                  const b = badgeFor(u.points);
+                  return (
+                    <div key={u.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/5">
+                      <div className="w-7 text-center text-sm font-bold text-muted-foreground">{i + 4}</div>
+                      <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center text-background font-bold text-xs overflow-hidden shrink-0">
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || u.email || "?").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate text-sm">{u.full_name || (u.email?.split("@")[0]) || "Anonymous"}</div>
+                        <div className="text-[11px] text-muted-foreground">{u.department ?? "CSE"}</div>
+                      </div>
+                      <span className={`hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-gradient-to-r ${b.bg} ${b.color} font-semibold`}>
+                        {b.emoji} {b.name}
+                      </span>
+                      <div className="inline-flex items-center gap-1.5 text-sm font-bold w-16 justify-end">
+                        <Trophy className="w-3.5 h-3.5 text-amber-400" /> {u.points}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function CTA() {
   return (
     <section className="relative py-24 px-4 sm:px-6">

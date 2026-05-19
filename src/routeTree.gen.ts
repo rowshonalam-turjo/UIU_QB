@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UploadRouteImport } from './routes/upload'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -22,9 +24,19 @@ const UploadRoute = UploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesRoute = CoursesRouteImport.update({
@@ -58,7 +70,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/courses': typeof CoursesRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/upload': typeof UploadRoute
   '/course/$code': typeof CourseCodeRoute
 }
@@ -67,7 +81,9 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/courses': typeof CoursesRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/upload': typeof UploadRoute
   '/course/$code': typeof CourseCodeRoute
 }
@@ -77,7 +93,9 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/courses': typeof CoursesRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/upload': typeof UploadRoute
   '/course/$code': typeof CourseCodeRoute
 }
@@ -88,7 +106,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/courses'
+    | '/forgot-password'
     | '/profile'
+    | '/reset-password'
     | '/upload'
     | '/course/$code'
   fileRoutesByTo: FileRoutesByTo
@@ -97,7 +117,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/courses'
+    | '/forgot-password'
     | '/profile'
+    | '/reset-password'
     | '/upload'
     | '/course/$code'
   id:
@@ -106,7 +128,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/courses'
+    | '/forgot-password'
     | '/profile'
+    | '/reset-password'
     | '/upload'
     | '/course/$code'
   fileRoutesById: FileRoutesById
@@ -116,7 +140,9 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CoursesRoute: typeof CoursesRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   UploadRoute: typeof UploadRoute
   CourseCodeRoute: typeof CourseCodeRoute
 }
@@ -130,11 +156,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses': {
@@ -180,7 +220,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CoursesRoute: CoursesRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   UploadRoute: UploadRoute,
   CourseCodeRoute: CourseCodeRoute,
 }

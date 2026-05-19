@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CSE_COURSES, UPLOAD_TYPES } from "@/lib/cse-courses";
+import { pdfFirstPageCover } from "@/lib/pdf-cover";
 
 export const Route = createFileRoute("/upload")({
   head: () => ({ meta: [{ title: "Upload — UIU Question Bank" }] }),
@@ -62,6 +63,17 @@ function UploadPage() {
       let sol: { path: string; url: string } | null = null;
       if (solution) sol = await uploadFile(solution);
 
+      // Try to auto-generate a cover image from PDF page 1 (best-effort, never blocks upload).
+      let cover: { path: string; url: string } | null = null;
+      try {
+        const blob = await pdfFirstPageCover(file);
+        if (blob) {
+          const coverFile = new File([blob], `cover-${Date.now()}.jpg`, { type: "image/jpeg" });
+          cover = await uploadFile(coverFile);
+        }
+      } catch { /* ignore cover generation errors */ }
+
+
       const { error: insErr } = await supabase.from("uploads").insert({
         user_id: user.id,
         title,
@@ -78,6 +90,8 @@ function UploadPage() {
         solution_url: sol?.url ?? null,
         solution_path: sol?.path ?? null,
         solution_name: solution?.name ?? null,
+        cover_url: cover?.url ?? null,
+        cover_path: cover?.path ?? null,
         status: "pending",
       });
       if (insErr) throw insErr;

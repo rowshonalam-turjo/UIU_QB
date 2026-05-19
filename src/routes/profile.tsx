@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, GraduationCap, Loader2, ShieldCheck, LogOut, Camera, FileText, Clock, CheckCircle2, XCircle, Trash2, Download } from "lucide-react";
+import { ArrowLeft, GraduationCap, Loader2, ShieldCheck, LogOut, Camera, FileText, Clock, CheckCircle2, XCircle, Trash2, Download, Trophy, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { badgeFor, nextBadge } from "@/lib/badges";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "My profile — UIU Question Bank" }] }),
@@ -125,7 +126,7 @@ function ProfilePage() {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
-                <p className="text-xs text-muted-foreground mt-1">Click your avatar to upload a new photo</p>
+                <PointsRow points={profile?.points ?? 0} />
               </div>
               <button onClick={handleLogout} className="px-4 py-2 rounded-xl glass text-sm inline-flex items-center gap-2 hover:bg-destructive/20 hover:text-destructive transition-colors">
                 <LogOut className="w-4 h-4" /> Sign out
@@ -180,6 +181,30 @@ function Field({ label, full, children }: { label: string; full?: boolean; child
       <span className="text-xs text-muted-foreground mb-1.5 block">{label}</span>
       {children}
     </label>
+  );
+}
+
+function PointsRow({ points }: { points: number }) {
+  const badge = badgeFor(points);
+  const next = nextBadge(points);
+  const pct = next ? Math.min(100, Math.round(((points - badge.min) / (next.min - badge.min)) * 100)) : 100;
+  return (
+    <div className="mt-3 flex items-center gap-3 flex-wrap">
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r ${badge.bg} text-xs font-bold ${badge.color} shadow-lg`}>
+        <span>{badge.emoji}</span> {badge.name}
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+        <Trophy className="w-4 h-4 text-amber-400" /> {points} pts
+      </span>
+      {next && (
+        <div className="flex-1 min-w-[140px]">
+          <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className={`h-full bg-gradient-to-r ${next.bg}`} style={{ width: `${pct}%` }} />
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-1">{next.min - points} pts to {next.name} {next.emoji}</div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -259,9 +284,15 @@ function MyUploads({ userId }: { userId: string }) {
               <a href={r.file_url} target="_blank" rel="noreferrer" className="p-2 rounded-lg glass hover:bg-white/10" title="Open file">
                 <Download className="w-4 h-4" />
               </a>
-              <button onClick={() => remove(r.id)} className="p-2 rounded-lg glass hover:bg-destructive/20 hover:text-destructive" title="Delete">
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {r.status === "pending" ? (
+                <button onClick={() => remove(r.id)} className="p-2 rounded-lg glass hover:bg-destructive/20 hover:text-destructive" title="Delete pending upload">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              ) : (
+                <span className="p-2 rounded-lg glass opacity-40 cursor-not-allowed" title="Only admins can remove approved or rejected uploads">
+                  <Lock className="w-4 h-4" />
+                </span>
+              )}
             </div>
           ))}
         </div>

@@ -14,7 +14,7 @@ import {
   Twitter,
   Linkedin,
   GraduationCap,
-  
+  Trophy,
   Flame,
 } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -23,6 +23,7 @@ import { useAuth } from "@/lib/auth-context";
 import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
 import { CSE_COURSES } from "@/lib/cse-courses";
 import { supabase } from "@/integrations/supabase/client";
+import { badgeFor } from "@/lib/badges";
 
 type TrendingRow = {
   id: string;
@@ -34,6 +35,7 @@ type TrendingRow = {
   downloads: number;
   likes: number;
   file_url: string;
+  cover_url: string | null;
 };
 
 const typeColors: Record<string, string> = {
@@ -61,7 +63,8 @@ function Navbar() {
 
         <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <Link to="/courses" className="hover:text-foreground transition-colors">Courses</Link>
-          <a href="#trending" className="hover:text-foreground transition-colors">Trending</a>
+          <a href="/#trending" className="hover:text-foreground transition-colors">Trending</a>
+          <a href="/#leaderboard" className="hover:text-foreground transition-colors">Leaderboard</a>
           <Link to="/upload" className="hover:text-foreground transition-colors">Upload</Link>
         </div>
 
@@ -327,7 +330,7 @@ function Trending() {
     (async () => {
       const { data } = await supabase
         .from("uploads")
-        .select("id, course_code, title, type, trimester, teacher, downloads, likes, file_url")
+        .select("id, course_code, title, type, trimester, teacher, downloads, likes, file_url, cover_url")
         .eq("status", "approved")
         .order("downloads", { ascending: false })
         .limit(6);
@@ -370,26 +373,143 @@ function Trending() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.06 }}
                 whileHover={{ y: -6 }}
-                className="group glass-card p-6 relative overflow-hidden block"
+                className="group glass-card relative overflow-hidden block"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <span className={`text-[10px] uppercase tracking-[0.15em] font-semibold px-2.5 py-1 rounded-md bg-gradient-to-r ${typeColors[q.type] ?? "from-violet-500 to-fuchsia-500"} text-background`}>
+                <div className="aspect-[4/3] w-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 overflow-hidden relative">
+                  {q.cover_url ? (
+                    <img src={q.cover_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FileText className="w-12 h-12 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <span className={`absolute top-3 left-3 text-[10px] uppercase tracking-[0.15em] font-semibold px-2.5 py-1 rounded-md bg-gradient-to-r ${typeColors[q.type] ?? "from-violet-500 to-fuchsia-500"} text-background`}>
                     {q.type}
                   </span>
-                  <span className="text-xs text-muted-foreground font-mono">{q.course_code}</span>
                 </div>
-                <h3 className="text-lg font-semibold leading-tight">{q.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1.5">{q.teacher ?? "—"} · {q.trimester ?? "—"}</p>
-                <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4">
-                  <div className="flex items-center gap-4">
-                    <span className="inline-flex items-center gap-1.5"><Download className="w-3.5 h-3.5" /> {q.downloads}</span>
-                    <span className="inline-flex items-center gap-1.5"><Heart className="w-3.5 h-3.5" /> {q.likes}</span>
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-muted-foreground font-mono">{q.course_code}</span>
                   </div>
-                  <FileText className="w-4 h-4 group-hover:text-foreground transition-colors" />
+                  <h3 className="text-base font-semibold leading-tight line-clamp-2">{q.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5">{q.teacher ?? "—"} · {q.trimester ?? "—"}</p>
+                  <div className="mt-5 flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-4">
+                    <div className="flex items-center gap-4">
+                      <span className="inline-flex items-center gap-1.5"><Download className="w-3.5 h-3.5" /> {q.downloads}</span>
+                      <span className="inline-flex items-center gap-1.5"><Heart className="w-3.5 h-3.5" /> {q.likes}</span>
+                    </div>
+                    <FileText className="w-4 h-4 group-hover:text-foreground transition-colors" />
+                  </div>
                 </div>
               </motion.a>
             ))}
           </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+type LeaderRow = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; points: number; department: string | null };
+
+function Leaderboard() {
+  const [rows, setRows] = useState<LeaderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url, points, department")
+        .order("points", { ascending: false })
+        .limit(10);
+      setRows((data ?? []) as LeaderRow[]);
+      setLoading(false);
+    })();
+  }, []);
+
+  const podium = rows.slice(0, 3);
+  const rest = rows.slice(3);
+
+  return (
+    <section id="leaderboard" className="relative py-24 px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-amber-400 mb-3">
+            <Trophy className="w-4 h-4" /> Leaderboard
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-bold">Top <span className="gradient-text">contributors</span></h2>
+          <p className="text-sm text-muted-foreground mt-4 max-w-xl mx-auto">
+            Earn <span className="text-amber-400 font-semibold">+10 pts</span> for every approved upload. Climb the ranks, unlock badges.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="glass-card p-10 text-center text-muted-foreground text-sm">Loading…</div>
+        ) : rows.length === 0 ? (
+          <div className="glass-card p-10 text-center text-sm text-muted-foreground">
+            No contributors yet. <Link to="/upload" className="gradient-text font-medium">Be the first →</Link>
+          </div>
+        ) : (
+          <>
+            {podium.length > 0 && (
+              <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                {podium.map((u, i) => {
+                  const b = badgeFor(u.points);
+                  const heights = ["sm:mt-0", "sm:mt-6", "sm:mt-10"];
+                  const rank = i + 1;
+                  return (
+                    <motion.div
+                      key={u.id}
+                      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className={`glass-card p-6 text-center relative overflow-hidden ${heights[i]}`}
+                    >
+                      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${b.bg}`} />
+                      <div className="text-3xl mb-2">{["🥇", "🥈", "🥉"][i]}</div>
+                      <div className="w-16 h-16 mx-auto rounded-2xl gradient-bg flex items-center justify-center text-background font-bold text-lg overflow-hidden">
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || u.email || "?").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="font-semibold truncate mt-3">{u.full_name || (u.email?.split("@")[0]) || "Anonymous"}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">#{rank} · {u.department ?? "CSE"}</div>
+                      <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold">
+                        <Trophy className="w-3.5 h-3.5 text-amber-400" /> {u.points} pts
+                      </div>
+                      <div className={`mt-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-gradient-to-r ${b.bg} ${b.color} font-semibold`}>
+                        {b.emoji} {b.name}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+
+            {rest.length > 0 && (
+              <div className="glass-card divide-y divide-border">
+                {rest.map((u, i) => {
+                  const b = badgeFor(u.points);
+                  return (
+                    <div key={u.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/5">
+                      <div className="w-7 text-center text-sm font-bold text-muted-foreground">{i + 4}</div>
+                      <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center text-background font-bold text-xs overflow-hidden shrink-0">
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || u.email || "?").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate text-sm">{u.full_name || (u.email?.split("@")[0]) || "Anonymous"}</div>
+                        <div className="text-[11px] text-muted-foreground">{u.department ?? "CSE"}</div>
+                      </div>
+                      <span className={`hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-gradient-to-r ${b.bg} ${b.color} font-semibold`}>
+                        {b.emoji} {b.name}
+                      </span>
+                      <div className="inline-flex items-center gap-1.5 text-sm font-bold w-16 justify-end">
+                        <Trophy className="w-3.5 h-3.5 text-amber-400" /> {u.points}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
@@ -452,20 +572,19 @@ function Footer() {
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground mb-4">Explore</div>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Browse questions</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Departments</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Leaderboard</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Upload guide</a></li>
+              <li><Link to="/courses" className="hover:text-foreground text-muted-foreground">Browse courses</Link></li>
+              <li><a href="/#trending" className="hover:text-foreground text-muted-foreground">Trending</a></li>
+              <li><a href="/#leaderboard" className="hover:text-foreground text-muted-foreground">Leaderboard</a></li>
+              <li><Link to="/upload" className="hover:text-foreground text-muted-foreground">Upload paper</Link></li>
             </ul>
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-4">Community</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-4">Account</div>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Discord</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Report issue</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Privacy</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Terms</a></li>
+              <li><Link to="/auth" className="hover:text-foreground text-muted-foreground">Sign in</Link></li>
+              <li><Link to="/profile" className="hover:text-foreground text-muted-foreground">My profile</Link></li>
+              <li><Link to="/forgot-password" className="hover:text-foreground text-muted-foreground">Forgot password</Link></li>
             </ul>
           </div>
         </div>
@@ -493,7 +612,7 @@ export function HomePage() {
         <Hero />
         <Courses />
         <Trending />
-        
+        <Leaderboard />
         <CTA />
       </main>
       <Footer />

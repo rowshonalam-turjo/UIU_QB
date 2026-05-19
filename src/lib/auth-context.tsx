@@ -10,6 +10,7 @@ type Profile = {
   department: string | null;
   semester: string | null;
   avatar_url: string | null;
+  points: number;
 };
 
 type AuthContextValue = {

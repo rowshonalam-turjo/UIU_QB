@@ -22,6 +22,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          points: number
           semester: string | null
           student_id: string | null
           updated_at: string
@@ -33,6 +34,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          points?: number
           semester?: string | null
           student_id?: string | null
           updated_at?: string
@@ -44,6 +46,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          points?: number
           semester?: string | null
           student_id?: string | null
           updated_at?: string
@@ -53,6 +56,8 @@ export type Database = {
       uploads: {
         Row: {
           course_code: string
+          cover_path: string | null
+          cover_url: string | null
           created_at: string
           department: string | null
           description: string | null
@@ -76,6 +81,8 @@ export type Database = {
         }
         Insert: {
           course_code: string
+          cover_path?: string | null
+          cover_url?: string | null
           created_at?: string
           department?: string | null
           description?: string | null
@@ -99,6 +106,8 @@ export type Database = {
         }
         Update: {
           course_code?: string
+          cover_path?: string | null
+          cover_url?: string | null
           created_at?: string
           department?: string | null
           description?: string | null

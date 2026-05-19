@@ -373,8 +373,21 @@ function Trending() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.06 }}
                 whileHover={{ y: -6 }}
-                className="group glass-card p-6 relative overflow-hidden block"
+                className="group glass-card relative overflow-hidden block"
               >
+                <div className="aspect-[4/3] w-full bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 overflow-hidden relative">
+                  {q.cover_url ? (
+                    <img src={q.cover_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FileText className="w-12 h-12 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <span className={`absolute top-3 left-3 text-[10px] uppercase tracking-[0.15em] font-semibold px-2.5 py-1 rounded-md bg-gradient-to-r ${typeColors[q.type] ?? "from-violet-500 to-fuchsia-500"} text-background`}>
+                    {q.type}
+                  </span>
+                </div>
+                <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <span className={`text-[10px] uppercase tracking-[0.15em] font-semibold px-2.5 py-1 rounded-md bg-gradient-to-r ${typeColors[q.type] ?? "from-violet-500 to-fuchsia-500"} text-background`}>
                     {q.type}

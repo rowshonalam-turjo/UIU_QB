@@ -600,7 +600,7 @@ export function HomePage() {
         <Hero />
         <Courses />
         <Trending />
-        
+        <Leaderboard />
         <CTA />
       </main>
       <Footer />

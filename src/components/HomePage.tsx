@@ -35,6 +35,7 @@ type TrendingRow = {
   downloads: number;
   likes: number;
   file_url: string;
+  cover_url: string | null;
 };
 
 const typeColors: Record<string, string> = {

@@ -330,7 +330,7 @@ function Trending() {
     (async () => {
       const { data } = await supabase
         .from("uploads")
-        .select("id, course_code, title, type, trimester, teacher, downloads, likes, file_url")
+        .select("id, course_code, title, type, trimester, teacher, downloads, likes, file_url, cover_url")
         .eq("status", "approved")
         .order("downloads", { ascending: false })
         .limit(6);

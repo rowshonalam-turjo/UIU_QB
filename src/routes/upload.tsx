@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CSE_COURSES, UPLOAD_TYPES } from "@/lib/cse-courses";
+import { pdfFirstPageCover } from "@/lib/pdf-cover";
 
 export const Route = createFileRoute("/upload")({
   head: () => ({ meta: [{ title: "Upload — UIU Question Bank" }] }),

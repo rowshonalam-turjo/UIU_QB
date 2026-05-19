@@ -62,7 +62,8 @@ function Navbar() {
 
         <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <Link to="/courses" className="hover:text-foreground transition-colors">Courses</Link>
-          <a href="#trending" className="hover:text-foreground transition-colors">Trending</a>
+          <a href="/#trending" className="hover:text-foreground transition-colors">Trending</a>
+          <a href="/#leaderboard" className="hover:text-foreground transition-colors">Leaderboard</a>
           <Link to="/upload" className="hover:text-foreground transition-colors">Upload</Link>
         </div>
 

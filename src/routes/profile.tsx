@@ -184,6 +184,30 @@ function Field({ label, full, children }: { label: string; full?: boolean; child
   );
 }
 
+function PointsRow({ points }: { points: number }) {
+  const badge = badgeFor(points);
+  const next = nextBadge(points);
+  const pct = next ? Math.min(100, Math.round(((points - badge.min) / (next.min - badge.min)) * 100)) : 100;
+  return (
+    <div className="mt-3 flex items-center gap-3 flex-wrap">
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r ${badge.bg} text-xs font-bold ${badge.color} shadow-lg`}>
+        <span>{badge.emoji}</span> {badge.name}
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+        <Trophy className="w-4 h-4 text-amber-400" /> {points} pts
+      </span>
+      {next && (
+        <div className="flex-1 min-w-[140px]">
+          <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className={`h-full bg-gradient-to-r ${next.bg}`} style={{ width: `${pct}%` }} />
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-1">{next.min - points} pts to {next.name} {next.emoji}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type UploadRow = {
   id: string;
   title: string;

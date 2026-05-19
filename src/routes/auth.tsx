@@ -146,7 +146,12 @@ function AuthPage() {
               </div>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1.5 block">Password</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs text-muted-foreground">Password</label>
+                {mode === "login" && (
+                  <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground">Forgot?</Link>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input

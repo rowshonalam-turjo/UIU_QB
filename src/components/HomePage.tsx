@@ -23,6 +23,7 @@ import { useAuth } from "@/lib/auth-context";
 import { ShieldCheck, User as UserIcon, LogIn, LogOut } from "lucide-react";
 import { CSE_COURSES } from "@/lib/cse-courses";
 import { supabase } from "@/integrations/supabase/client";
+import { badgeFor } from "@/lib/badges";
 
 type TrendingRow = {
   id: string;

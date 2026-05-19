@@ -90,6 +90,8 @@ function UploadPage() {
         solution_url: sol?.url ?? null,
         solution_path: sol?.path ?? null,
         solution_name: solution?.name ?? null,
+        cover_url: cover?.url ?? null,
+        cover_path: cover?.path ?? null,
         status: "pending",
       });
       if (insErr) throw insErr;

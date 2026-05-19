@@ -560,20 +560,19 @@ function Footer() {
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground mb-4">Explore</div>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Browse questions</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Departments</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Leaderboard</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Upload guide</a></li>
+              <li><Link to="/courses" className="hover:text-foreground text-muted-foreground">Browse courses</Link></li>
+              <li><a href="/#trending" className="hover:text-foreground text-muted-foreground">Trending</a></li>
+              <li><a href="/#leaderboard" className="hover:text-foreground text-muted-foreground">Leaderboard</a></li>
+              <li><Link to="/upload" className="hover:text-foreground text-muted-foreground">Upload paper</Link></li>
             </ul>
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-4">Community</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-4">Account</div>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Discord</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Report issue</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Privacy</a></li>
-              <li><a href="#" className="hover:text-foreground text-muted-foreground">Terms</a></li>
+              <li><Link to="/auth" className="hover:text-foreground text-muted-foreground">Sign in</Link></li>
+              <li><Link to="/profile" className="hover:text-foreground text-muted-foreground">My profile</Link></li>
+              <li><Link to="/forgot-password" className="hover:text-foreground text-muted-foreground">Forgot password</Link></li>
             </ul>
           </div>
         </div>

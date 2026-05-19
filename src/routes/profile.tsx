@@ -126,7 +126,7 @@ function ProfilePage() {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
-                <p className="text-xs text-muted-foreground mt-1">Click your avatar to upload a new photo</p>
+                <PointsRow points={(profile as { points?: number } | null)?.points ?? 0} />
               </div>
               <button onClick={handleLogout} className="px-4 py-2 rounded-xl glass text-sm inline-flex items-center gap-2 hover:bg-destructive/20 hover:text-destructive transition-colors">
                 <LogOut className="w-4 h-4" /> Sign out

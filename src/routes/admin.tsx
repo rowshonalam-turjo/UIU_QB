@@ -51,6 +51,8 @@ function AdminPage() {
     if (isAdmin) load();
   }, [isAdmin, load]);
 
+  const removeUser = useServerFn(deleteUserFn);
+
   const toggleAdmin = async (row: Row) => {
     if (row.is_admin) {
       const { error } = await supabase
@@ -69,6 +71,18 @@ function AdminPage() {
     }
     load();
   };
+
+  const handleDeleteUser = async (row: Row) => {
+    if (!confirm(`Permanently delete ${row.full_name || row.email}? This removes their account and all data.`)) return;
+    try {
+      await removeUser({ data: { userId: row.id } });
+      toast.success("User deleted");
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to delete user");
+    }
+  };
+
 
   if (loading || !isAdmin) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
@@ -153,6 +167,15 @@ function AdminPage() {
                       >
                         {r.is_admin ? (<><ShieldOff className="w-3.5 h-3.5" /> Revoke admin</>) : (<><ShieldCheck className="w-3.5 h-3.5" /> Make admin</>)}
                       </button>
+                      <button
+                        onClick={() => handleDeleteUser(r)}
+                        disabled={r.id === user?.id}
+                        title={r.id === user?.id ? "You cannot delete yourself" : "Remove user"}
+                        className="shrink-0 p-2 rounded-lg glass hover:bg-destructive/20 hover:text-destructive transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <UserX className="w-3.5 h-3.5" />
+                      </button>
+
                     </div>
                   );
                 })}

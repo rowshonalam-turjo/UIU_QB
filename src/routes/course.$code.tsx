@@ -1,9 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye } from "lucide-react";
+import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye, Share2, Check } from "lucide-react";
 import { CSE_COURSES, UPLOAD_TYPES, type UploadType } from "@/lib/cse-courses";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/course/$code")({
   head: ({ params }) => ({ meta: [{ title: `${params.code.replace(/-/g, " ")} — UIU Question Bank` }] }),
@@ -149,7 +150,27 @@ function CoursePage() {
 
 function FileCard({ upload }: { upload: Upload }) {
   const [hover, setHover] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isPdf = /\.pdf(\?|$)/i.test(upload.file_url);
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/course/${upload.course_code.replace(/\s+/g, "-")}?q=${upload.id}`;
+    const shareData = { title: upload.title, text: `${upload.title} — UIU Question Bank`, url: shareUrl };
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch { /* user cancelled — fall through to copy */ }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success("Link copied to clipboard");
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Couldn't copy link");
+    }
+  };
 
   return (
     <div
@@ -211,6 +232,15 @@ function FileCard({ upload }: { upload: Upload }) {
           ) : (
             <span className="text-[10px] text-muted-foreground px-2 py-1">No solution yet</span>
           )}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="ml-auto px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10"
+            title="Share link"
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+            {copied ? "Copied" : "Share"}
+          </button>
         </div>
       </div>
     </div>

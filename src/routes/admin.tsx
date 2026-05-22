@@ -361,3 +361,164 @@ function UploadModeration() {
     </div>
   );
 }
+
+type DownloadRow = {
+  upload_id: string;
+  title: string;
+  course_code: string;
+  total: number;
+  unique_users: number;
+  anonymous: number;
+};
+
+function DownloadsAnalytics() {
+  const [rows, setRows] = useState<DownloadRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data: events } = await supabase
+      .from("download_events")
+      .select("upload_id, user_id")
+      .limit(10000);
+    const uploadIds = Array.from(new Set((events ?? []).map((e) => e.upload_id)));
+    const { data: uploads } = uploadIds.length
+      ? await supabase.from("uploads").select("id, title, course_code").in("id", uploadIds)
+      : { data: [] as { id: string; title: string; course_code: string }[] };
+    const uMap = new Map((uploads ?? []).map((u) => [u.id, u]));
+    const agg = new Map<string, { total: number; users: Set<string>; anon: number }>();
+    for (const e of events ?? []) {
+      const a = agg.get(e.upload_id) ?? { total: 0, users: new Set<string>(), anon: 0 };
+      a.total += 1;
+      if (e.user_id) a.users.add(e.user_id);
+      else a.anon += 1;
+      agg.set(e.upload_id, a);
+    }
+    const out: DownloadRow[] = Array.from(agg.entries()).map(([id, a]) => {
+      const u = uMap.get(id);
+      return {
+        upload_id: id,
+        title: u?.title ?? "(deleted)",
+        course_code: u?.course_code ?? "",
+        total: a.total,
+        unique_users: a.users.size,
+        anonymous: a.anon,
+      };
+    }).sort((x, y) => y.total - x.total).slice(0, 50);
+    setRows(out);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const totalDownloads = rows.reduce((s, r) => s + r.total, 0);
+
+  return (
+    <div className="glass-card overflow-hidden mt-8">
+      <div className="p-5 border-b border-border flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Download className="w-4 h-4 text-muted-foreground" />
+          <h2 className="font-bold">Downloads analytics</h2>
+        </div>
+        <div className="text-xs text-muted-foreground">Total tracked: <span className="gradient-text font-bold">{totalDownloads}</span></div>
+      </div>
+      {loading ? (
+        <div className="p-12 text-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" /></div>
+      ) : rows.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">No downloads recorded yet.</div>
+      ) : (
+        <div className="divide-y divide-border">
+          {rows.map((r) => (
+            <div key={r.upload_id} className="px-4 sm:px-6 py-3 flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate text-sm">{r.title}</div>
+                <div className="text-xs text-muted-foreground font-mono">{r.course_code}</div>
+              </div>
+              <div className="text-xs text-muted-foreground hidden sm:block">{r.unique_users} users · {r.anonymous} anon</div>
+              <div className="text-lg font-display font-bold gradient-text w-12 text-right">{r.total}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type AuditRow = {
+  id: string;
+  admin_id: string;
+  upload_id: string;
+  action: string;
+  previous_status: string | null;
+  created_at: string;
+  admin_name?: string | null;
+  admin_email?: string | null;
+  upload_title?: string | null;
+};
+
+function AuditLog() {
+  const [rows, setRows] = useState<AuditRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("audit_logs")
+      .select("id, admin_id, upload_id, action, previous_status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const list = (data ?? []) as AuditRow[];
+    const adminIds = Array.from(new Set(list.map((r) => r.admin_id)));
+    const uploadIds = Array.from(new Set(list.map((r) => r.upload_id)));
+    const [{ data: admins }, { data: uploads }] = await Promise.all([
+      adminIds.length ? supabase.from("profiles").select("id, full_name, email").in("id", adminIds) : Promise.resolve({ data: [] as { id: string; full_name: string | null; email: string | null }[] }),
+      uploadIds.length ? supabase.from("uploads").select("id, title").in("id", uploadIds) : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+    ]);
+    const aMap = new Map((admins ?? []).map((a) => [a.id, a]));
+    const uMap = new Map((uploads ?? []).map((u) => [u.id, u]));
+    list.forEach((r) => {
+      const a = aMap.get(r.admin_id);
+      r.admin_name = a?.full_name ?? null;
+      r.admin_email = a?.email ?? null;
+      r.upload_title = uMap.get(r.upload_id)?.title ?? "(deleted)";
+    });
+    setRows(list);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <div className="glass-card overflow-hidden mt-8 mb-12">
+      <div className="p-5 border-b border-border flex items-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-muted-foreground" />
+        <h2 className="font-bold">Admin audit log</h2>
+        <span className="text-xs text-muted-foreground ml-auto">Last 100 actions</span>
+      </div>
+      {loading ? (
+        <div className="p-12 text-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" /></div>
+      ) : rows.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">No admin actions recorded yet.</div>
+      ) : (
+        <div className="divide-y divide-border">
+          {rows.map((r) => {
+            const color = r.action === "approved" ? "text-emerald-400" : r.action === "rejected" ? "text-destructive" : "text-muted-foreground";
+            return (
+              <div key={r.id} className="px-4 sm:px-6 py-3 flex items-center gap-3 flex-wrap text-sm">
+                <span className={`uppercase text-[10px] tracking-wider font-bold ${color} w-20`}>{r.action}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate">{r.upload_title}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    by {r.admin_name || r.admin_email || r.admin_id.slice(0, 8)}
+                    {r.previous_status ? ` · was ${r.previous_status}` : ""}
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground font-mono whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

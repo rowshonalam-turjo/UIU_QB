@@ -1,7 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye, Share2, Check } from "lucide-react";
+import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye, Share2, Check, Archive } from "lucide-react";
+import JSZip from "jszip";
 import { CSE_COURSES, UPLOAD_TYPES, type UploadType } from "@/lib/cse-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ type Upload = {
   file_name: string;
   solution_url: string | null;
   solution_name: string | null;
+  cover_url: string | null;
   created_at: string;
 };
 
@@ -43,13 +45,14 @@ function CoursePage() {
   const [tab, setTab] = useState<UploadType>("CT");
   const [items, setItems] = useState<Upload[]>([]);
   const [loading, setLoading] = useState(true);
+  const [zipping, setZipping] = useState<"q" | "s" | null>(null);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     supabase
       .from("uploads")
-      .select("id,title,course_code,type,trimester,teacher,description,file_url,file_name,solution_url,solution_name,created_at")
+      .select("id,title,course_code,type,trimester,teacher,description,file_url,file_name,solution_url,solution_name,cover_url,created_at")
       .ilike("course_code", course.code)
       .eq("status", "approved")
       .order("created_at", { ascending: false })
@@ -61,8 +64,9 @@ function CoursePage() {
     return () => { active = false; };
   }, [course.code]);
 
+  const filtered = useMemo(() => items.filter((i) => i.type === tab), [items, tab]);
+
   const grouped = useMemo(() => {
-    const filtered = items.filter((i) => i.type === tab);
     const map = new Map<string, Upload[]>();
     for (const u of filtered) {
       const key = u.trimester?.trim() || "Other";
@@ -70,7 +74,60 @@ function CoursePage() {
       map.get(key)!.push(u);
     }
     return Array.from(map.entries());
-  }, [items, tab]);
+  }, [filtered]);
+
+  const downloadZip = async (kind: "q" | "s") => {
+    const list = kind === "q"
+      ? filtered
+      : filtered.filter((u) => u.solution_url);
+    if (list.length === 0) {
+      toast.error(kind === "q" ? "No questions to download" : "No solutions available");
+      return;
+    }
+    setZipping(kind);
+    try {
+      const zip = new JSZip();
+      const seen = new Map<string, number>();
+      await Promise.all(list.map(async (u) => {
+        const url = kind === "q" ? u.file_url : u.solution_url!;
+        const baseName = (kind === "q" ? u.file_name : (u.solution_name ?? u.file_name)) || `${u.title}.pdf`;
+        const safeTri = (u.trimester || "Other").replace(/[^\w\s-]/g, "").trim();
+        let name = `${safeTri}/${baseName}`;
+        const n = seen.get(name) ?? 0;
+        seen.set(name, n + 1);
+        if (n > 0) {
+          const dot = baseName.lastIndexOf(".");
+          const stem = dot > 0 ? baseName.slice(0, dot) : baseName;
+          const ext = dot > 0 ? baseName.slice(dot) : "";
+          name = `${safeTri}/${stem}-${n}${ext}`;
+        }
+        try {
+          const res = await fetch(url);
+          const blob = await res.blob();
+          zip.file(name, blob);
+        } catch {
+          // skip failed
+        }
+      }));
+      const blob = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      const dl = URL.createObjectURL(blob);
+      a.href = dl;
+      a.download = `${course.code.replace(/\s+/g, "_")}_${tab}_${kind === "q" ? "questions" : "solutions"}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(dl);
+      toast.success(`Downloaded ${list.length} ${kind === "q" ? "questions" : "solutions"}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to build zip");
+    } finally {
+      setZipping(null);
+    }
+  };
+
+  const solutionsCount = filtered.filter((u) => u.solution_url).length;
 
   return (
     <div className="min-h-screen px-4 py-12 sm:py-16">
@@ -109,6 +166,28 @@ function CoursePage() {
               );
             })}
           </div>
+
+          {filtered.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground mr-1">Bulk download:</span>
+              <button
+                onClick={() => downloadZip("q")}
+                disabled={zipping !== null}
+                className="px-3 py-2 rounded-xl gradient-bg text-background text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-60"
+              >
+                {zipping === "q" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Archive className="w-3.5 h-3.5" />}
+                All {tab} questions ({filtered.length})
+              </button>
+              <button
+                onClick={() => downloadZip("s")}
+                disabled={zipping !== null || solutionsCount === 0}
+                className="px-3 py-2 rounded-xl glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10 disabled:opacity-50"
+              >
+                {zipping === "s" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Archive className="w-3.5 h-3.5" />}
+                All {tab} solutions ({solutionsCount})
+              </button>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -131,9 +210,9 @@ function CoursePage() {
                   {list.map((u, i) => (
                     <motion.div
                       key={u.id}
-                      initial={{ opacity: 0, y: 12 }}
+                      initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: i * 0.04 }}
+                      transition={{ duration: 0.35, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
                     >
                       <FileCard upload={u} />
                     </motion.div>
@@ -169,7 +248,7 @@ function FileCard({ upload }: { upload: Upload }) {
         await navigator.share(shareData);
         return;
       }
-    } catch { /* user cancelled — fall through to copy */ }
+    } catch { /* fall through */ }
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
@@ -181,36 +260,69 @@ function FileCard({ upload }: { upload: Upload }) {
   };
 
   return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      className="group glass-card overflow-hidden relative"
+    <motion.div
+      onHoverStart={() => setHover(true)}
+      onHoverEnd={() => setHover(false)}
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 260, damping: 22 }}
+      className="group glass-card overflow-hidden relative hover:shadow-2xl hover:shadow-primary/10"
     >
-      <div className="relative h-44 bg-black/30 border-b border-border overflow-hidden">
-        {isPdf ? (
+      <div className="relative h-52 bg-gradient-to-br from-black/40 via-black/20 to-primary/10 border-b border-border overflow-hidden">
+        {upload.cover_url ? (
+          <motion.img
+            src={upload.cover_url}
+            alt={upload.title}
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={false}
+            animate={{ scale: hover ? 1.08 : 1, filter: hover ? "brightness(1.05)" : "brightness(0.95)" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            loading="lazy"
+          />
+        ) : isPdf ? (
           <>
             <iframe
               src={`${upload.file_url}#toolbar=0&navpanes=0&view=FitH`}
               className="absolute inset-0 w-full h-full pointer-events-none"
               title={upload.title}
             />
-            <div className={`absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px] transition-opacity ${hover ? "opacity-0" : "opacity-100"}`}>
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]"
+              animate={{ opacity: hover ? 0 : 1 }}
+              transition={{ duration: 0.3 }}
+            >
               <FileText className="w-10 h-10 text-muted-foreground" />
-            </div>
+            </motion.div>
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <FileText className="w-10 h-10 text-muted-foreground" />
           </div>
         )}
-        <a
-          href={upload.file_url}
-          target="_blank"
-          rel="noreferrer"
-          className="absolute top-2 right-2 px-2 py-1 rounded-md glass text-[10px] inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <Eye className="w-3 h-3" /> Open
-        </a>
+
+        {/* sheen */}
+        <motion.div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent"
+          initial={{ x: "-120%" }}
+          animate={{ x: hover ? "120%" : "-120%" }}
+          transition={{ duration: 0.9, ease: "easeInOut" }}
+        />
+
+        {/* bottom gradient + meta */}
+        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-white/80 px-2 py-0.5 rounded-md bg-white/10 backdrop-blur">
+              {upload.type}
+            </span>
+            <a
+              href={upload.file_url}
+              target="_blank"
+              rel="noreferrer"
+              className="px-2 py-1 rounded-md glass text-[10px] inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Eye className="w-3 h-3" /> Open
+            </a>
+          </div>
+        </div>
       </div>
 
       <div className="p-5">
@@ -253,6 +365,6 @@ function FileCard({ upload }: { upload: Upload }) {
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

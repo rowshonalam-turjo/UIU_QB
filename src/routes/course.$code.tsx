@@ -153,6 +153,14 @@ function FileCard({ upload }: { upload: Upload }) {
   const [copied, setCopied] = useState(false);
   const isPdf = /\.pdf(\?|$)/i.test(upload.file_url);
 
+  const trackDownload = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("download_events").insert({
+      upload_id: upload.id,
+      user_id: user?.id ?? null,
+    });
+  };
+
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/course/${upload.course_code.replace(/\s+/g, "-")}?q=${upload.id}`;
     const shareData = { title: upload.title, text: `${upload.title} — UIU Question Bank`, url: shareUrl };

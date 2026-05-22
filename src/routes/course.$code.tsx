@@ -153,6 +153,14 @@ function FileCard({ upload }: { upload: Upload }) {
   const [copied, setCopied] = useState(false);
   const isPdf = /\.pdf(\?|$)/i.test(upload.file_url);
 
+  const trackDownload = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("download_events").insert({
+      upload_id: upload.id,
+      user_id: user?.id ?? null,
+    });
+  };
+
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/course/${upload.course_code.replace(/\s+/g, "-")}?q=${upload.id}`;
     const shareData = { title: upload.title, text: `${upload.title} — UIU Question Bank`, url: shareUrl };
@@ -215,6 +223,7 @@ function FileCard({ upload }: { upload: Upload }) {
             download={upload.file_name}
             target="_blank"
             rel="noreferrer"
+            onClick={trackDownload}
             className="px-3 py-1.5 rounded-lg gradient-bg text-background text-xs font-medium inline-flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5" /> Question
@@ -225,6 +234,7 @@ function FileCard({ upload }: { upload: Upload }) {
               download={upload.solution_name ?? undefined}
               target="_blank"
               rel="noreferrer"
+              onClick={trackDownload}
               className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10"
             >
               <Download className="w-3.5 h-3.5" /> Solution

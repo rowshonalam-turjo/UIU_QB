@@ -184,6 +184,8 @@ function AdminPage() {
           </div>
 
           <UploadModeration />
+          <DownloadsAnalytics />
+          <AuditLog />
         </motion.div>
       </div>
     </div>

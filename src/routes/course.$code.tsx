@@ -223,6 +223,7 @@ function FileCard({ upload }: { upload: Upload }) {
             download={upload.file_name}
             target="_blank"
             rel="noreferrer"
+            onClick={trackDownload}
             className="px-3 py-1.5 rounded-lg gradient-bg text-background text-xs font-medium inline-flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5" /> Question
@@ -233,6 +234,7 @@ function FileCard({ upload }: { upload: Upload }) {
               download={upload.solution_name ?? undefined}
               target="_blank"
               rel="noreferrer"
+              onClick={trackDownload}
               className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10"
             >
               <Download className="w-3.5 h-3.5" /> Solution

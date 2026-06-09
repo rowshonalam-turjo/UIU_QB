@@ -106,6 +106,9 @@ export type Database = {
       }
       uploads: {
         Row: {
+          code_name: string | null
+          code_path: string | null
+          code_url: string | null
           course_code: string
           cover_path: string | null
           cover_url: string | null
@@ -131,6 +134,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          code_name?: string | null
+          code_path?: string | null
+          code_url?: string | null
           course_code: string
           cover_path?: string | null
           cover_url?: string | null
@@ -156,6 +162,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          code_name?: string | null
+          code_path?: string | null
+          code_url?: string | null
           course_code?: string
           cover_path?: string | null
           cover_url?: string | null

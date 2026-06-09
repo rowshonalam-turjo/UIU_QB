@@ -38,5 +38,18 @@ export const CSE_COURSES: CSECourse[] = [
   { code: "CSE 4799", title: "Capstone Project" },
 ];
 
-export const UPLOAD_TYPES = ["CT", "Mid", "Final", "Assignment"] as const;
+export const BASE_UPLOAD_TYPES = ["CT", "Mid", "Final", "Assignment"] as const;
+export const LAB_EXTRA_TYPES = ["Lab Report", "Project"] as const;
+export const UPLOAD_TYPES = [...BASE_UPLOAD_TYPES, ...LAB_EXTRA_TYPES] as const;
 export type UploadType = (typeof UPLOAD_TYPES)[number];
+
+export function isLabCourse(code: string): boolean {
+  const c = CSE_COURSES.find((x) => x.code.toLowerCase() === code.toLowerCase());
+  if (!c) return /lab/i.test(code);
+  return /lab/i.test(c.title) || /lab/i.test(c.code);
+}
+
+export function getUploadTypesFor(code: string): readonly UploadType[] {
+  return isLabCourse(code) ? UPLOAD_TYPES : BASE_UPLOAD_TYPES;
+}
+

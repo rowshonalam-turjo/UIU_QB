@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye, Share2, Check, Archive } from "lucide-react";
 import JSZip from "jszip";
-import { CSE_COURSES, UPLOAD_TYPES, type UploadType } from "@/lib/cse-courses";
+import { CSE_COURSES, getUploadTypesFor, type UploadType } from "@/lib/cse-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -32,6 +32,8 @@ type Upload = {
   file_name: string;
   solution_url: string | null;
   solution_name: string | null;
+  code_url: string | null;
+  code_name: string | null;
   cover_url: string | null;
   created_at: string;
 };
@@ -42,7 +44,9 @@ function CoursePage() {
   const course = CSE_COURSES.find((c) => c.code.toLowerCase() === courseCode.toLowerCase());
   if (!course) throw notFound();
 
-  const [tab, setTab] = useState<UploadType>("CT");
+  const availableTypes = getUploadTypesFor(course.code);
+  const [tab, setTab] = useState<UploadType>(availableTypes[0]);
+
   const [items, setItems] = useState<Upload[]>([]);
   const [loading, setLoading] = useState(true);
   const [zipping, setZipping] = useState<"q" | "s" | null>(null);
@@ -52,7 +56,7 @@ function CoursePage() {
     setLoading(true);
     supabase
       .from("uploads")
-      .select("id,title,course_code,type,trimester,teacher,description,file_url,file_name,solution_url,solution_name,cover_url,created_at")
+      .select("id,title,course_code,type,trimester,teacher,description,file_url,file_name,solution_url,solution_name,code_url,code_name,cover_url,created_at")
       .ilike("course_code", course.code)
       .eq("status", "approved")
       .order("created_at", { ascending: false })
@@ -149,7 +153,7 @@ function CoursePage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-2">
-            {UPLOAD_TYPES.map((t) => {
+            {availableTypes.map((t) => {
               const count = items.filter((i) => i.type === t).length;
               const active = tab === t;
               return (
@@ -354,6 +358,20 @@ function FileCard({ upload }: { upload: Upload }) {
           ) : (
             <span className="text-[10px] text-muted-foreground px-2 py-1">No solution yet</span>
           )}
+          {upload.code_url && (
+            <a
+              href={upload.code_url}
+              download={upload.code_name ?? undefined}
+              target="_blank"
+              rel="noreferrer"
+              onClick={trackDownload}
+              className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10"
+              title="Project source code"
+            >
+              <Archive className="w-3.5 h-3.5" /> Code
+            </a>
+          )}
+
           <button
             type="button"
             onClick={handleShare}

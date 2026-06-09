@@ -5,7 +5,7 @@ import { ArrowLeft, Upload as UploadIcon, Loader2, FileText, X } from "lucide-re
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CSE_COURSES, UPLOAD_TYPES } from "@/lib/cse-courses";
+import { CSE_COURSES, getUploadTypesFor, isLabCourse } from "@/lib/cse-courses";
 import { pdfFirstPageCover } from "@/lib/pdf-cover";
 
 export const Route = createFileRoute("/upload")({
@@ -32,7 +32,11 @@ function UploadPage() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [solution, setSolution] = useState<File | null>(null);
+  const [codeFile, setCodeFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const availableTypes = courseCode ? getUploadTypesFor(courseCode) : [];
+  const showCodeUpload = type === "Project" && isLabCourse(courseCode);
+
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -53,30 +57,49 @@ function UploadPage() {
 
   const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
   const ALLOWED_EXT = ["pdf", "jpg", "jpeg", "png", "webp"];
-  const validateFile = (f: File, label: string): boolean => {
+  const CODE_EXT = ["zip", "rar", "7z", "tar", "gz"];
+  const CODE_MIME = [
+    "application/zip", "application/x-zip-compressed", "application/x-zip",
+    "application/x-rar-compressed", "application/vnd.rar",
+    "application/x-7z-compressed",
+    "application/x-tar", "application/gzip", "application/x-gzip",
+    "application/octet-stream",
+  ];
+  const validateFile = (f: File, label: string, kind: "doc" | "code" = "doc"): boolean => {
     const ext = (f.name.split(".").pop() || "").toLowerCase();
-    if (!ALLOWED_MIME.includes(f.type) || !ALLOWED_EXT.includes(ext)) {
-      toast.error(`${label}: only PDF, JPG, PNG or WEBP files are allowed`);
+    const exts = kind === "code" ? CODE_EXT : ALLOWED_EXT;
+    const mimes = kind === "code" ? CODE_MIME : ALLOWED_MIME;
+    if (!exts.includes(ext) || (f.type && !mimes.includes(f.type))) {
+      toast.error(
+        kind === "code"
+          ? `${label}: only ZIP, RAR, 7Z, TAR or GZ archives are allowed`
+          : `${label}: only PDF, JPG, PNG or WEBP files are allowed`,
+      );
       return false;
     }
-    if (f.size > 20 * 1024 * 1024) {
-      toast.error(`${label} too large (max 20MB)`);
+    const maxMb = kind === "code" ? 50 : 20;
+    if (f.size > maxMb * 1024 * 1024) {
+      toast.error(`${label} too large (max ${maxMb}MB)`);
       return false;
     }
     return true;
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) { toast.error("Please choose a question file"); return; }
     if (!validateFile(file, "Question file")) return;
     if (solution && !validateFile(solution, "Solution file")) return;
+    if (codeFile && !validateFile(codeFile, "Code archive", "code")) return;
 
     setBusy(true);
     try {
       const q = await uploadFile(file);
       let sol: { path: string; url: string } | null = null;
       if (solution) sol = await uploadFile(solution);
+      let code: { path: string; url: string } | null = null;
+      if (showCodeUpload && codeFile) code = await uploadFile(codeFile);
 
       // Try to auto-generate a cover image from PDF page 1 (best-effort, never blocks upload).
       let cover: { path: string; url: string } | null = null;
@@ -105,6 +128,9 @@ function UploadPage() {
         solution_url: sol?.url ?? null,
         solution_path: sol?.path ?? null,
         solution_name: solution?.name ?? null,
+        code_url: code?.url ?? null,
+        code_path: code?.path ?? null,
+        code_name: code ? codeFile?.name ?? null : null,
         cover_url: cover?.url ?? null,
         cover_path: cover?.path ?? null,
         status: "pending",
@@ -119,6 +145,7 @@ function UploadPage() {
       setBusy(false);
     }
   };
+
 
   return (
     <div className="min-h-screen px-4 py-12 sm:py-16">
@@ -144,17 +171,37 @@ function UploadPage() {
                 <input required value={title} onChange={(e) => setTitle(e.target.value)} className="input" placeholder="Data Structures — Final 2024" />
               </Field>
               <Field label="Course">
-                <select required value={courseCode} onChange={(e) => setCourseCode(e.target.value)} className="input">
+                <select
+                  required
+                  value={courseCode}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setCourseCode(next);
+                    if (type && !getUploadTypesFor(next).includes(type as never)) {
+                      setType("");
+                      setCodeFile(null);
+                    }
+                  }}
+                  className="input"
+                >
                   <option value="">Select course…</option>
-                  {CSE_COURSES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.title}</option>)}
+                  {CSE_COURSES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.title}{/lab/i.test(c.title) ? " · Lab" : ""}</option>)}
                 </select>
               </Field>
+
               <Field label="Type">
-                <select required value={type} onChange={(e) => setType(e.target.value)} className="input">
-                  <option value="">Select…</option>
-                  {UPLOAD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                <select
+                  required
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="input"
+                  disabled={!courseCode}
+                >
+                  <option value="">{courseCode ? "Select…" : "Select a course first"}</option>
+                  {availableTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </Field>
+
               <Field label="Trimester">
                 <select value={trimester} onChange={(e) => setTrimester(e.target.value)} className="input">
                   <option value="">Select…</option>
@@ -176,6 +223,18 @@ function UploadPage() {
                 <FilePicker file={solution} onChange={setSolution} hint="Upload the solution PDF if you have one — students will be able to download it alongside the question." />
               </Field>
 
+              {showCodeUpload && (
+                <Field label="Project code (ZIP / RAR / 7Z, optional)" full>
+                  <FilePicker
+                    file={codeFile}
+                    onChange={setCodeFile}
+                    kind="code"
+                    hint="Bundle your project source code as an archive (max 50MB). Students can download it with the project."
+                  />
+                </Field>
+              )}
+
+
               <div className="sm:col-span-2 flex justify-end">
                 <button type="submit" disabled={busy} className="px-5 py-2.5 rounded-xl gradient-bg text-background font-medium text-sm inline-flex items-center gap-2 disabled:opacity-50">
                   {busy && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -195,7 +254,10 @@ function UploadPage() {
   );
 }
 
-function FilePicker({ file, onChange, hint }: { file: File | null; onChange: (f: File | null) => void; hint?: string }) {
+function FilePicker({ file, onChange, hint, kind = "doc" }: { file: File | null; onChange: (f: File | null) => void; hint?: string; kind?: "doc" | "code" }) {
+  const accept = kind === "code"
+    ? ".zip,.rar,.7z,.tar,.gz,application/zip,application/x-zip-compressed,application/x-rar-compressed,application/vnd.rar,application/x-7z-compressed,application/x-tar,application/gzip"
+    : ".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp";
   return file ? (
     <div className="flex items-center gap-3 p-4 rounded-xl glass">
       <FileText className="w-5 h-5 text-muted-foreground" />
@@ -211,11 +273,12 @@ function FilePicker({ file, onChange, hint }: { file: File | null; onChange: (f:
     <label className="flex flex-col items-center justify-center p-6 rounded-xl glass border-2 border-dashed border-border cursor-pointer hover:bg-white/5 transition-colors">
       <UploadIcon className="w-5 h-5 text-muted-foreground mb-2" />
       <span className="text-sm">Click to choose a file</span>
-      <span className="text-xs text-muted-foreground mt-1 text-center">{hint ?? "PDF, DOCX, image — up to 20MB"}</span>
-      <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+      <span className="text-xs text-muted-foreground mt-1 text-center">{hint ?? (kind === "code" ? "ZIP, RAR, 7Z, TAR, GZ — up to 50MB" : "PDF, image — up to 20MB")}</span>
+      <input type="file" accept={accept} className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
     </label>
   );
 }
+
 
 function Field({ label, full, children }: { label: string; full?: boolean; children: React.ReactNode }) {
   return (

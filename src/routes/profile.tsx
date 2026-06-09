@@ -26,6 +26,53 @@ function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+
+  const PRESET_AVATARS = (() => {
+    const styles = ["adventurer", "avataaars", "bottts", "fun-emoji", "lorelei", "micah", "notionists", "thumbs"];
+    const seeds = ["Aria", "Leo", "Mia", "Zane", "Nova", "Kai", "Ivy", "Rex", "Sky", "Bo", "Echo", "Sage", "Jet", "Wren", "Pixel", "Cosmo"];
+    const out: string[] = [];
+    seeds.forEach((s, i) => {
+      const style = styles[i % styles.length];
+      out.push(`https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(s)}&backgroundType=gradientLinear`);
+    });
+    return out;
+  })();
+
+  const pickPresetAvatar = async (url: string) => {
+    if (!user) return;
+    setUploadingAvatar(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      if (error) throw error;
+      setAvatarUrl(url);
+      await refreshProfile();
+      toast.success("Avatar updated");
+      setAvatarPickerOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to set avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+      if (error) throw error;
+      setAvatarUrl("");
+      await refreshProfile();
+      toast.success("Avatar removed");
+      setAvatarPickerOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
 
   const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];

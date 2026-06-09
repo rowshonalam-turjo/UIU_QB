@@ -488,10 +488,10 @@ function Leaderboard() {
                     <div key={u.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/5">
                       <div className="w-7 text-center text-sm font-bold text-muted-foreground">{i + 4}</div>
                       <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center text-background font-bold text-xs overflow-hidden shrink-0">
-                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || u.email || "?").slice(0, 2).toUpperCase()}
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "?").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate text-sm">{u.full_name || (u.email?.split("@")[0]) || "Anonymous"}</div>
+                        <div className="font-medium truncate text-sm">{u.full_name || "Anonymous"}</div>
                         <div className="text-[11px] text-muted-foreground">{u.department ?? "CSE"}</div>
                       </div>
                       <span className={`hidden sm:inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-gradient-to-r ${b.bg} ${b.color} font-semibold`}>

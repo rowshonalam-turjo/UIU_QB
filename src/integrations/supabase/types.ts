@@ -205,7 +205,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          department: string | null
+          full_name: string | null
+          id: string | null
+          points: number | null
+          semester: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          full_name?: string | null
+          id?: string | null
+          points?: number | null
+          semester?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          full_name?: string | null
+          id?: string | null
+          points?: number | null
+          semester?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

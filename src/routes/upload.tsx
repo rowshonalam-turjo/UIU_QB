@@ -91,12 +91,15 @@ function UploadPage() {
     if (!file) { toast.error("Please choose a question file"); return; }
     if (!validateFile(file, "Question file")) return;
     if (solution && !validateFile(solution, "Solution file")) return;
+    if (codeFile && !validateFile(codeFile, "Code archive", "code")) return;
 
     setBusy(true);
     try {
       const q = await uploadFile(file);
       let sol: { path: string; url: string } | null = null;
       if (solution) sol = await uploadFile(solution);
+      let code: { path: string; url: string } | null = null;
+      if (showCodeUpload && codeFile) code = await uploadFile(codeFile);
 
       // Try to auto-generate a cover image from PDF page 1 (best-effort, never blocks upload).
       let cover: { path: string; url: string } | null = null;
@@ -125,6 +128,9 @@ function UploadPage() {
         solution_url: sol?.url ?? null,
         solution_path: sol?.path ?? null,
         solution_name: solution?.name ?? null,
+        code_url: code?.url ?? null,
+        code_path: code?.path ?? null,
+        code_name: code ? codeFile?.name ?? null : null,
         cover_url: cover?.url ?? null,
         cover_path: cover?.path ?? null,
         status: "pending",
@@ -139,6 +145,7 @@ function UploadPage() {
       setBusy(false);
     }
   };
+
 
   return (
     <div className="min-h-screen px-4 py-12 sm:py-16">

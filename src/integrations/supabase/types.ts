@@ -205,38 +205,20 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          department: string | null
-          full_name: string | null
-          id: string | null
-          points: number | null
-          semester: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          department?: string | null
-          full_name?: string | null
-          id?: string | null
-          points?: number | null
-          semester?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          department?: string | null
-          full_name?: string | null
-          id?: string | null
-          points?: number | null
-          semester?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string
+          department: string
+          full_name: string
+          id: string
+          points: number
+          semester: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

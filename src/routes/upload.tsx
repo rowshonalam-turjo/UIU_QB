@@ -171,11 +171,24 @@ function UploadPage() {
                 <input required value={title} onChange={(e) => setTitle(e.target.value)} className="input" placeholder="Data Structures — Final 2024" />
               </Field>
               <Field label="Course">
-                <select required value={courseCode} onChange={(e) => setCourseCode(e.target.value)} className="input">
+                <select
+                  required
+                  value={courseCode}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setCourseCode(next);
+                    if (type && !getUploadTypesFor(next).includes(type as never)) {
+                      setType("");
+                      setCodeFile(null);
+                    }
+                  }}
+                  className="input"
+                >
                   <option value="">Select course…</option>
-                  {CSE_COURSES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.title}</option>)}
+                  {CSE_COURSES.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.title}{/lab/i.test(c.title) ? " · Lab" : ""}</option>)}
                 </select>
               </Field>
+
               <Field label="Type">
                 <select
                   required

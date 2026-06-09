@@ -410,7 +410,7 @@ function Trending() {
   );
 }
 
-type LeaderRow = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; points: number; department: string | null };
+type LeaderRow = { id: string; full_name: string | null; avatar_url: string | null; points: number; department: string | null };
 
 function Leaderboard() {
   const [rows, setRows] = useState<LeaderRow[]>([]);
@@ -418,11 +418,7 @@ function Leaderboard() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, avatar_url, points, department")
-        .order("points", { ascending: false })
-        .limit(10);
+      const { data } = await (supabase as any).rpc("get_leaderboard", { _limit: 10 });
       setRows((data ?? []) as LeaderRow[]);
       setLoading(false);
     })();

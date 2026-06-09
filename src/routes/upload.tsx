@@ -32,7 +32,11 @@ function UploadPage() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [solution, setSolution] = useState<File | null>(null);
+  const [codeFile, setCodeFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const availableTypes = courseCode ? getUploadTypesFor(courseCode) : [];
+  const showCodeUpload = type === "Project" && isLabCourse(courseCode);
+
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });

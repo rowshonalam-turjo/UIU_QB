@@ -153,7 +153,7 @@ function CoursePage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-2">
-            {UPLOAD_TYPES.map((t) => {
+            {availableTypes.map((t) => {
               const count = items.filter((i) => i.type === t).length;
               const active = tab === t;
               return (

@@ -31,6 +31,13 @@ function ProfilePage() {
     const f = e.target.files?.[0];
     if (!f || !user) return;
     if (f.size > 5 * 1024 * 1024) { toast.error("Image too large (max 5MB)"); return; }
+    const AVATAR_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const AVATAR_EXT = ["jpg", "jpeg", "png", "webp", "gif"];
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (!AVATAR_MIME.includes(f.type) || !AVATAR_EXT.includes(ext)) {
+      toast.error("Only JPG, PNG, WEBP or GIF images are allowed");
+      return;
+    }
     setUploadingAvatar(true);
     try {
       const ext = f.name.split(".").pop() || "png";

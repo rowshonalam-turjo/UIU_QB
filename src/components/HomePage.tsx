@@ -464,9 +464,9 @@ function Leaderboard() {
                       <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${b.bg}`} />
                       <div className="text-3xl mb-2">{["🥇", "🥈", "🥉"][i]}</div>
                       <div className="w-16 h-16 mx-auto rounded-2xl gradient-bg flex items-center justify-center text-background font-bold text-lg overflow-hidden">
-                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || u.email || "?").slice(0, 2).toUpperCase()}
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : (u.full_name || "?").slice(0, 2).toUpperCase()}
                       </div>
-                      <div className="font-semibold truncate mt-3">{u.full_name || (u.email?.split("@")[0]) || "Anonymous"}</div>
+                      <div className="font-semibold truncate mt-3">{u.full_name || "Anonymous"}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">#{rank} · {u.department ?? "CSE"}</div>
                       <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold">
                         <Trophy className="w-3.5 h-3.5 text-amber-400" /> {u.points} pts

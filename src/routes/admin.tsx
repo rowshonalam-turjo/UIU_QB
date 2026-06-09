@@ -347,7 +347,7 @@ function UploadModeration() {
               </div>
             </div>
             <div className="flex-1 overflow-auto bg-black/40">
-              <iframe src={preview.file_url} title={preview.title} className="w-full h-[70vh]" />
+              <iframe src={preview.file_url} title={preview.title} className="w-full h-[70vh]" sandbox="" referrerPolicy="no-referrer" />
             </div>
             {preview.solution_url && (
               <div className="p-3 border-t border-border text-xs flex items-center justify-between">

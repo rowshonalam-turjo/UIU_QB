@@ -161,15 +161,21 @@ function ProfilePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="glass-card p-7 sm:p-10">
             <div className="flex items-center gap-5 flex-wrap">
-              <label className="relative group cursor-pointer">
+              <div className="relative">
                 <div className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center text-2xl font-display font-bold text-background glow overflow-hidden">
                   {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : initials}
                 </div>
-                <div className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  {uploadingAvatar ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Camera className="w-5 h-5 text-white" />}
-                </div>
-                <input type="file" accept="image/*" className="hidden" disabled={uploadingAvatar} onChange={handleAvatarFile} />
-              </label>
+                <button
+                  type="button"
+                  onClick={() => setAvatarPickerOpen(true)}
+                  className="absolute -bottom-1 -right-1 p-1.5 rounded-full gradient-bg text-background shadow-lg hover:scale-105 transition-transform"
+                  title="Choose avatar or upload photo"
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Smile className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold truncate">{fullName || "Anonymous student"}</h1>

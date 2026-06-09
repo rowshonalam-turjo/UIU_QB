@@ -51,11 +51,26 @@ function UploadPage() {
     return { path, url: data.publicUrl };
   };
 
+  const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+  const ALLOWED_EXT = ["pdf", "jpg", "jpeg", "png", "webp"];
+  const validateFile = (f: File, label: string): boolean => {
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (!ALLOWED_MIME.includes(f.type) || !ALLOWED_EXT.includes(ext)) {
+      toast.error(`${label}: only PDF, JPG, PNG or WEBP files are allowed`);
+      return false;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error(`${label} too large (max 20MB)`);
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) { toast.error("Please choose a question file"); return; }
-    if (file.size > 20 * 1024 * 1024) { toast.error("Question file too large (max 20MB)"); return; }
-    if (solution && solution.size > 20 * 1024 * 1024) { toast.error("Solution file too large (max 20MB)"); return; }
+    if (!validateFile(file, "Question file")) return;
+    if (solution && !validateFile(solution, "Solution file")) return;
 
     setBusy(true);
     try {

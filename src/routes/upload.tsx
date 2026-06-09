@@ -170,11 +170,18 @@ function UploadPage() {
                 </select>
               </Field>
               <Field label="Type">
-                <select required value={type} onChange={(e) => setType(e.target.value)} className="input">
-                  <option value="">Select…</option>
-                  {UPLOAD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                <select
+                  required
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="input"
+                  disabled={!courseCode}
+                >
+                  <option value="">{courseCode ? "Select…" : "Select a course first"}</option>
+                  {availableTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </Field>
+
               <Field label="Trimester">
                 <select value={trimester} onChange={(e) => setTrimester(e.target.value)} className="input">
                   <option value="">Select…</option>

@@ -57,18 +57,34 @@ function UploadPage() {
 
   const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
   const ALLOWED_EXT = ["pdf", "jpg", "jpeg", "png", "webp"];
-  const validateFile = (f: File, label: string): boolean => {
+  const CODE_EXT = ["zip", "rar", "7z", "tar", "gz"];
+  const CODE_MIME = [
+    "application/zip", "application/x-zip-compressed", "application/x-zip",
+    "application/x-rar-compressed", "application/vnd.rar",
+    "application/x-7z-compressed",
+    "application/x-tar", "application/gzip", "application/x-gzip",
+    "application/octet-stream",
+  ];
+  const validateFile = (f: File, label: string, kind: "doc" | "code" = "doc"): boolean => {
     const ext = (f.name.split(".").pop() || "").toLowerCase();
-    if (!ALLOWED_MIME.includes(f.type) || !ALLOWED_EXT.includes(ext)) {
-      toast.error(`${label}: only PDF, JPG, PNG or WEBP files are allowed`);
+    const exts = kind === "code" ? CODE_EXT : ALLOWED_EXT;
+    const mimes = kind === "code" ? CODE_MIME : ALLOWED_MIME;
+    if (!exts.includes(ext) || (f.type && !mimes.includes(f.type))) {
+      toast.error(
+        kind === "code"
+          ? `${label}: only ZIP, RAR, 7Z, TAR or GZ archives are allowed`
+          : `${label}: only PDF, JPG, PNG or WEBP files are allowed`,
+      );
       return false;
     }
-    if (f.size > 20 * 1024 * 1024) {
-      toast.error(`${label} too large (max 20MB)`);
+    const maxMb = kind === "code" ? 50 : 20;
+    if (f.size > maxMb * 1024 * 1024) {
+      toast.error(`${label} too large (max ${maxMb}MB)`);
       return false;
     }
     return true;
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

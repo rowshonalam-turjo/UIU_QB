@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, GraduationCap, Loader2, ShieldCheck, LogOut, Camera, FileText, Clock, CheckCircle2, XCircle, Trash2, Download, Trophy, Lock } from "lucide-react";
+import { ArrowLeft, GraduationCap, Loader2, ShieldCheck, LogOut, Camera, FileText, Clock, CheckCircle2, XCircle, Trash2, Download, Trophy, Lock, Smile, Check, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +26,53 @@ function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+
+  const PRESET_AVATARS = (() => {
+    const styles = ["adventurer", "avataaars", "bottts", "fun-emoji", "lorelei", "micah", "notionists", "thumbs"];
+    const seeds = ["Aria", "Leo", "Mia", "Zane", "Nova", "Kai", "Ivy", "Rex", "Sky", "Bo", "Echo", "Sage", "Jet", "Wren", "Pixel", "Cosmo"];
+    const out: string[] = [];
+    seeds.forEach((s, i) => {
+      const style = styles[i % styles.length];
+      out.push(`https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(s)}&backgroundType=gradientLinear`);
+    });
+    return out;
+  })();
+
+  const pickPresetAvatar = async (url: string) => {
+    if (!user) return;
+    setUploadingAvatar(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      if (error) throw error;
+      setAvatarUrl(url);
+      await refreshProfile();
+      toast.success("Avatar updated");
+      setAvatarPickerOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to set avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+      if (error) throw error;
+      setAvatarUrl("");
+      await refreshProfile();
+      toast.success("Avatar removed");
+      setAvatarPickerOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
 
   const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -114,15 +161,21 @@ function ProfilePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="glass-card p-7 sm:p-10">
             <div className="flex items-center gap-5 flex-wrap">
-              <label className="relative group cursor-pointer">
+              <div className="relative">
                 <div className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center text-2xl font-display font-bold text-background glow overflow-hidden">
                   {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : initials}
                 </div>
-                <div className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  {uploadingAvatar ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Camera className="w-5 h-5 text-white" />}
-                </div>
-                <input type="file" accept="image/*" className="hidden" disabled={uploadingAvatar} onChange={handleAvatarFile} />
-              </label>
+                <button
+                  type="button"
+                  onClick={() => setAvatarPickerOpen(true)}
+                  className="absolute -bottom-1 -right-1 p-1.5 rounded-full gradient-bg text-background shadow-lg hover:scale-105 transition-transform"
+                  title="Choose avatar or upload photo"
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Smile className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl font-bold truncate">{fullName || "Anonymous student"}</h1>
@@ -173,6 +226,75 @@ function ProfilePage() {
           <MyUploads userId={user.id} />
         </motion.div>
       </div>
+
+      {avatarPickerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => !uploadingAvatar && setAvatarPickerOpen(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="glass-card max-w-lg w-full p-6 sm:p-7 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setAvatarPickerOpen(false)}
+              disabled={uploadingAvatar}
+              className="absolute top-3 right-3 p-1.5 rounded-lg glass hover:bg-white/10"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <h2 className="text-lg font-bold">Choose an avatar</h2>
+            <p className="text-xs text-muted-foreground mt-1">Pick a fun avatar — or upload your own photo.</p>
+
+            <div className="mt-5 grid grid-cols-4 sm:grid-cols-6 gap-3">
+              {PRESET_AVATARS.map((url) => {
+                const active = avatarUrl === url;
+                return (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => pickPresetAvatar(url)}
+                    disabled={uploadingAvatar}
+                    className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 ${
+                      active ? "border-primary glow" : "border-transparent hover:border-white/30"
+                    }`}
+                    title="Use this avatar"
+                  >
+                    <img src={url} alt="" className="w-full h-full object-cover bg-white/5" loading="lazy" />
+                    {active && (
+                      <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full gradient-bg text-background flex items-center justify-center">
+                        <Check className="w-3 h-3" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex items-center justify-between gap-3 flex-wrap border-t border-border pt-5">
+              <label className="px-3 py-2 rounded-xl glass text-xs font-medium inline-flex items-center gap-2 cursor-pointer hover:bg-white/10">
+                <Camera className="w-3.5 h-3.5" /> Upload my own
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={uploadingAvatar} onChange={handleAvatarFile} />
+              </label>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={removeAvatar}
+                  disabled={uploadingAvatar}
+                  className="px-3 py-2 rounded-xl glass text-xs font-medium hover:bg-destructive/20 hover:text-destructive inline-flex items-center gap-2"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Remove avatar
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
 
       <style>{`
         .input { width: 100%; padding: 0.7rem 1rem; border-radius: 0.75rem; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); outline: none; font-size: 0.875rem; color: var(--color-foreground); }

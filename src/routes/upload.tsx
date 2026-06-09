@@ -223,6 +223,18 @@ function UploadPage() {
                 <FilePicker file={solution} onChange={setSolution} hint="Upload the solution PDF if you have one — students will be able to download it alongside the question." />
               </Field>
 
+              {showCodeUpload && (
+                <Field label="Project code (ZIP / RAR / 7Z, optional)" full>
+                  <FilePicker
+                    file={codeFile}
+                    onChange={setCodeFile}
+                    kind="code"
+                    hint="Bundle your project source code as an archive (max 50MB). Students can download it with the project."
+                  />
+                </Field>
+              )}
+
+
               <div className="sm:col-span-2 flex justify-end">
                 <button type="submit" disabled={busy} className="px-5 py-2.5 rounded-xl gradient-bg text-background font-medium text-sm inline-flex items-center gap-2 disabled:opacity-50">
                   {busy && <Loader2 className="w-4 h-4 animate-spin" />}

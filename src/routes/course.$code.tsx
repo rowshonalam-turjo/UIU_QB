@@ -358,6 +358,20 @@ function FileCard({ upload }: { upload: Upload }) {
           ) : (
             <span className="text-[10px] text-muted-foreground px-2 py-1">No solution yet</span>
           )}
+          {upload.code_url && (
+            <a
+              href={upload.code_url}
+              download={upload.code_name ?? undefined}
+              target="_blank"
+              rel="noreferrer"
+              onClick={trackDownload}
+              className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10"
+              title="Project source code"
+            >
+              <Archive className="w-3.5 h-3.5" /> Code
+            </a>
+          )}
+
           <button
             type="button"
             onClick={handleShare}

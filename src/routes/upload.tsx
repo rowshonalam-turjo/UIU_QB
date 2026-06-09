@@ -254,7 +254,10 @@ function UploadPage() {
   );
 }
 
-function FilePicker({ file, onChange, hint }: { file: File | null; onChange: (f: File | null) => void; hint?: string }) {
+function FilePicker({ file, onChange, hint, kind = "doc" }: { file: File | null; onChange: (f: File | null) => void; hint?: string; kind?: "doc" | "code" }) {
+  const accept = kind === "code"
+    ? ".zip,.rar,.7z,.tar,.gz,application/zip,application/x-zip-compressed,application/x-rar-compressed,application/vnd.rar,application/x-7z-compressed,application/x-tar,application/gzip"
+    : ".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp";
   return file ? (
     <div className="flex items-center gap-3 p-4 rounded-xl glass">
       <FileText className="w-5 h-5 text-muted-foreground" />
@@ -270,11 +273,12 @@ function FilePicker({ file, onChange, hint }: { file: File | null; onChange: (f:
     <label className="flex flex-col items-center justify-center p-6 rounded-xl glass border-2 border-dashed border-border cursor-pointer hover:bg-white/5 transition-colors">
       <UploadIcon className="w-5 h-5 text-muted-foreground mb-2" />
       <span className="text-sm">Click to choose a file</span>
-      <span className="text-xs text-muted-foreground mt-1 text-center">{hint ?? "PDF, DOCX, image — up to 20MB"}</span>
-      <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+      <span className="text-xs text-muted-foreground mt-1 text-center">{hint ?? (kind === "code" ? "ZIP, RAR, 7Z, TAR, GZ — up to 50MB" : "PDF, image — up to 20MB")}</span>
+      <input type="file" accept={accept} className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
     </label>
   );
 }
+
 
 function Field({ label, full, children }: { label: string; full?: boolean; children: React.ReactNode }) {
   return (

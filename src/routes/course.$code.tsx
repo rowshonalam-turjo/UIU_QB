@@ -56,7 +56,7 @@ function CoursePage() {
     setLoading(true);
     supabase
       .from("uploads")
-      .select("id,title,course_code,type,trimester,teacher,description,file_url,file_name,solution_url,solution_name,cover_url,created_at")
+      .select("id,title,course_code,type,trimester,teacher,description,file_url,file_name,solution_url,solution_name,code_url,code_name,cover_url,created_at")
       .ilike("course_code", course.code)
       .eq("status", "approved")
       .order("created_at", { ascending: false })

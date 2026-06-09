@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye, Share2, Check, Archive } from "lucide-react";
 import JSZip from "jszip";
-import { CSE_COURSES, UPLOAD_TYPES, type UploadType } from "@/lib/cse-courses";
+import { CSE_COURSES, getUploadTypesFor, type UploadType } from "@/lib/cse-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 

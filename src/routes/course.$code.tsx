@@ -32,6 +32,8 @@ type Upload = {
   file_name: string;
   solution_url: string | null;
   solution_name: string | null;
+  code_url: string | null;
+  code_name: string | null;
   cover_url: string | null;
   created_at: string;
 };
@@ -42,7 +44,9 @@ function CoursePage() {
   const course = CSE_COURSES.find((c) => c.code.toLowerCase() === courseCode.toLowerCase());
   if (!course) throw notFound();
 
-  const [tab, setTab] = useState<UploadType>("CT");
+  const availableTypes = getUploadTypesFor(course.code);
+  const [tab, setTab] = useState<UploadType>(availableTypes[0]);
+
   const [items, setItems] = useState<Upload[]>([]);
   const [loading, setLoading] = useState(true);
   const [zipping, setZipping] = useState<"q" | "s" | null>(null);

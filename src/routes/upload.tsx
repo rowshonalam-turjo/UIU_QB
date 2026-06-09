@@ -212,7 +212,7 @@ function FilePicker({ file, onChange, hint }: { file: File | null; onChange: (f:
       <UploadIcon className="w-5 h-5 text-muted-foreground mb-2" />
       <span className="text-sm">Click to choose a file</span>
       <span className="text-xs text-muted-foreground mt-1 text-center">{hint ?? "PDF, DOCX, image — up to 20MB"}</span>
-      <input type="file" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
     </label>
   );
 }

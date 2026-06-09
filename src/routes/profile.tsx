@@ -227,6 +227,75 @@ function ProfilePage() {
         </motion.div>
       </div>
 
+      {avatarPickerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => !uploadingAvatar && setAvatarPickerOpen(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="glass-card max-w-lg w-full p-6 sm:p-7 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setAvatarPickerOpen(false)}
+              disabled={uploadingAvatar}
+              className="absolute top-3 right-3 p-1.5 rounded-lg glass hover:bg-white/10"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <h2 className="text-lg font-bold">Choose an avatar</h2>
+            <p className="text-xs text-muted-foreground mt-1">Pick a fun avatar — or upload your own photo.</p>
+
+            <div className="mt-5 grid grid-cols-4 sm:grid-cols-6 gap-3">
+              {PRESET_AVATARS.map((url) => {
+                const active = avatarUrl === url;
+                return (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => pickPresetAvatar(url)}
+                    disabled={uploadingAvatar}
+                    className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 ${
+                      active ? "border-primary glow" : "border-transparent hover:border-white/30"
+                    }`}
+                    title="Use this avatar"
+                  >
+                    <img src={url} alt="" className="w-full h-full object-cover bg-white/5" loading="lazy" />
+                    {active && (
+                      <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full gradient-bg text-background flex items-center justify-center">
+                        <Check className="w-3 h-3" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex items-center justify-between gap-3 flex-wrap border-t border-border pt-5">
+              <label className="px-3 py-2 rounded-xl glass text-xs font-medium inline-flex items-center gap-2 cursor-pointer hover:bg-white/10">
+                <Camera className="w-3.5 h-3.5" /> Upload my own
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={uploadingAvatar} onChange={handleAvatarFile} />
+              </label>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={removeAvatar}
+                  disabled={uploadingAvatar}
+                  className="px-3 py-2 rounded-xl glass text-xs font-medium hover:bg-destructive/20 hover:text-destructive inline-flex items-center gap-2"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Remove avatar
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+
       <style>{`
         .input { width: 100%; padding: 0.7rem 1rem; border-radius: 0.75rem; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); outline: none; font-size: 0.875rem; color: var(--color-foreground); }
         .input:focus { box-shadow: 0 0 0 2px var(--color-primary); }

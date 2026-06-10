@@ -114,6 +114,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -121,7 +122,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
+        <div className="pb-20 md:pb-0">
+          <Outlet />
+        </div>
+        <MobileBottomNav />
         <Toaster richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>

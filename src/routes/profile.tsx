@@ -29,15 +29,27 @@ function ProfilePage() {
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
   const PRESET_AVATARS = (() => {
-    const styles = ["adventurer", "avataaars", "bottts", "fun-emoji", "lorelei", "micah", "notionists", "thumbs"];
-    const seeds = ["Aria", "Leo", "Mia", "Zane", "Nova", "Kai", "Ivy", "Rex", "Sky", "Bo", "Echo", "Sage", "Jet", "Wren", "Pixel", "Cosmo"];
+    // Curated professional + attractive DiceBear styles
+    const sets: Array<{ style: string; seeds: string[]; opts?: string }> = [
+      { style: "personas", seeds: ["Alexander", "Sophia", "Daniel", "Olivia", "Ethan", "Amelia"], opts: "backgroundType=gradientLinear&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf" },
+      { style: "notionists", seeds: ["Maya", "Aaron", "Lina", "Kenji", "Iris", "Theo"], opts: "backgroundType=gradientLinear&backgroundColor=transparent,b6e3f4,c0aede" },
+      { style: "avataaars", seeds: ["Jordan", "Priya", "Liam", "Zara"], opts: "backgroundType=gradientLinear&backgroundColor=0a5b83,1c799f,69d2e7,f5d76e" },
+      { style: "lorelei", seeds: ["Aria", "Noor", "Mila", "Eva"], opts: "backgroundType=gradientLinear&backgroundColor=b6e3f4,c0aede,ffd5dc" },
+      { style: "micah", seeds: ["Rex", "Sage", "Cosmo", "Wren"], opts: "backgroundType=gradientLinear&backgroundColor=0a5b83,1c799f,69d2e7" },
+      { style: "open-peeps", seeds: ["Nova", "Kai", "Ivy", "Jet"], opts: "backgroundType=gradientLinear&backgroundColor=b6e3f4,c0aede,d1d4f9" },
+      { style: "initials", seeds: ["UIU", "QB", "CSE", "EEE"], opts: "backgroundType=gradientLinear&fontWeight=700" },
+      { style: "shapes", seeds: ["Pulse", "Orbit", "Flux", "Vertex"], opts: "" },
+    ];
     const out: string[] = [];
-    seeds.forEach((s, i) => {
-      const style = styles[i % styles.length];
-      out.push(`https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(s)}&backgroundType=gradientLinear`);
+    sets.forEach(({ style, seeds, opts }) => {
+      seeds.forEach((s) => {
+        const q = opts ? `&${opts}` : "";
+        out.push(`https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(s)}${q}`);
+      });
     });
     return out;
   })();
+
 
   const pickPresetAvatar = async (url: string) => {
     if (!user) return;
@@ -260,7 +272,7 @@ function ProfilePage() {
             <h2 className="text-lg font-bold">Choose an avatar</h2>
             <p className="text-xs text-muted-foreground mt-1">Pick a fun avatar — or upload your own photo.</p>
 
-            <div className="mt-5 grid grid-cols-4 sm:grid-cols-6 gap-3">
+            <div className="mt-5 grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[55vh] overflow-y-auto pr-1">
               {PRESET_AVATARS.map((url) => {
                 const active = avatarUrl === url;
                 return (

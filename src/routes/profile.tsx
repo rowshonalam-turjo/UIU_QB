@@ -272,7 +272,7 @@ function ProfilePage() {
             <h2 className="text-lg font-bold">Choose an avatar</h2>
             <p className="text-xs text-muted-foreground mt-1">Pick a fun avatar — or upload your own photo.</p>
 
-            <div className="mt-5 grid grid-cols-4 sm:grid-cols-6 gap-3">
+            <div className="mt-5 grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[55vh] overflow-y-auto pr-1">
               {PRESET_AVATARS.map((url) => {
                 const active = avatarUrl === url;
                 return (

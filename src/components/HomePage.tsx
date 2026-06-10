@@ -16,6 +16,8 @@ import {
   GraduationCap,
   Trophy,
   Flame,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -46,6 +48,15 @@ const typeColors: Record<string, string> = {
 };
 
 function Navbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const navLinks = (
+    <>
+      <Link to="/courses" onClick={() => setMobileOpen(false)} className="hover:text-foreground transition-colors">Courses</Link>
+      <a href="/#trending" onClick={() => setMobileOpen(false)} className="hover:text-foreground transition-colors">Trending</a>
+      <a href="/#leaderboard" onClick={() => setMobileOpen(false)} className="hover:text-foreground transition-colors">Leaderboard</a>
+      <Link to="/upload" onClick={() => setMobileOpen(false)} className="hover:text-foreground transition-colors">Upload</Link>
+    </>
+  );
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 pt-4">
       <nav className="glass max-w-7xl mx-auto rounded-2xl px-5 py-3 flex items-center justify-between">
@@ -62,14 +73,25 @@ function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          <Link to="/courses" className="hover:text-foreground transition-colors">Courses</Link>
-          <a href="/#trending" className="hover:text-foreground transition-colors">Trending</a>
-          <a href="/#leaderboard" className="hover:text-foreground transition-colors">Leaderboard</a>
-          <Link to="/upload" className="hover:text-foreground transition-colors">Upload</Link>
+          {navLinks}
         </div>
 
-        <AuthArea />
+        <div className="flex items-center gap-2">
+          <AuthArea />
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+            className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl glass hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground"
+          >
+            {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+        </div>
       </nav>
+      {mobileOpen && (
+        <div className="md:hidden max-w-7xl mx-auto mt-2 glass rounded-2xl px-5 py-4 flex flex-col gap-3 text-sm text-muted-foreground">
+          {navLinks}
+        </div>
+      )}
     </header>
   );
 }

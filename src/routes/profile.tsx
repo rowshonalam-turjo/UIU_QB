@@ -161,10 +161,19 @@ function ProfilePage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="glass-card p-7 sm:p-10">
             <div className="flex items-center gap-5 flex-wrap">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center text-2xl font-display font-bold text-background glow overflow-hidden">
+              <div className="relative group">
+                <button
+                  type="button"
+                  onClick={() => setAvatarPickerOpen(true)}
+                  disabled={uploadingAvatar}
+                  className="w-20 h-20 rounded-2xl gradient-bg flex items-center justify-center text-2xl font-display font-bold text-background glow overflow-hidden relative"
+                  title="Click to change avatar"
+                >
                   {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : initials}
-                </div>
+                  <span className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-semibold uppercase tracking-wider">
+                    {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : "Change"}
+                  </span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setAvatarPickerOpen(true)}
@@ -175,6 +184,7 @@ function ProfilePage() {
                   {uploadingAvatar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Smile className="w-3.5 h-3.5" />}
                 </button>
               </div>
+
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

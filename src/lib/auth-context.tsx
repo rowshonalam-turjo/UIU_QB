@@ -55,13 +55,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // THEN restore existing session
-    supabase.auth.getSession().then(({ data: { session: sess } }) => {
-      setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) loadUserData(sess.user.id).finally(() => setLoading(false));
-      else setLoading(false);
-    });
+    // THEN restore existing session — gracefully handle stale refresh tokens
+    supabase.auth.getSession()
+      .then(async ({ data: { session: sess }, error }) => {
+        if (error) {
+          // Stale/invalid refresh token — clear it silently
+          await supabase.auth.signOut().catch(() => {});
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        setSession(sess);
+        setUser(sess?.user ?? null);
+        if (sess?.user) loadUserData(sess.user.id).finally(() => setLoading(false));
+        else setLoading(false);
+      })
+      .catch(async () => {
+        await supabase.auth.signOut().catch(() => {});
+        setLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);

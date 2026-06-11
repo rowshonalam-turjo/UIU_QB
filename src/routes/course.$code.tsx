@@ -1,11 +1,14 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye, Share2, Check, Archive } from "lucide-react";
+import { ArrowLeft, Download, FileText, Upload as UploadIcon, Loader2, Eye, Share2, Check, Archive, Plus } from "lucide-react";
 import JSZip from "jszip";
 import { CSE_COURSES, getUploadTypesFor, type UploadType } from "@/lib/cse-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth-context";
+import { useServerFn } from "@tanstack/react-start";
+import { addSolutionToUpload } from "@/lib/uploads.functions";
 
 export const Route = createFileRoute("/course/$code")({
   head: ({ params }) => ({ meta: [{ title: `${params.code.replace(/-/g, " ")} — UIU Question Bank` }] }),
@@ -218,7 +221,14 @@ function CoursePage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      <FileCard upload={u} />
+                      <FileCard
+                        upload={u}
+                        onSolutionAdded={(sol) =>
+                          setItems((prev) =>
+                            prev.map((p) => (p.id === u.id ? { ...p, ...sol } : p)),
+                          )
+                        }
+                      />
                     </motion.div>
                   ))}
                 </div>
@@ -231,10 +241,15 @@ function CoursePage() {
   );
 }
 
-function FileCard({ upload }: { upload: Upload }) {
+function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded?: (sol: { solution_url: string; solution_name: string }) => void }) {
   const [hover, setHover] = useState(false);
   const [copied, setCopied] = useState(false);
   const isPdf = /\.pdf(\?|$)/i.test(upload.file_url);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const addSolution = useServerFn(addSolutionToUpload);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploadingSol, setUploadingSol] = useState(false);
 
   const trackDownload = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -260,6 +275,51 @@ function FileCard({ upload }: { upload: Upload }) {
       setTimeout(() => setCopied(false), 1800);
     } catch {
       toast.error("Couldn't copy link");
+    }
+  };
+
+  const handlePickSolution = () => {
+    if (!user) {
+      toast.info("Please sign in to add a solution");
+      navigate({ to: "/auth" });
+      return;
+    }
+    fileRef.current?.click();
+  };
+
+  const handleSolutionFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f || !user) return;
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (!["pdf", "jpg", "jpeg", "png", "webp"].includes(ext)) {
+      toast.error("Only PDF, JPG, PNG or WEBP allowed");
+      return;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Solution file too large (max 20MB)");
+      return;
+    }
+    setUploadingSol(true);
+    try {
+      const path = `${user.id}/solutions/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("questions").upload(path, f, { cacheControl: "3600", upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("questions").getPublicUrl(path);
+      await addSolution({
+        data: {
+          upload_id: upload.id,
+          solution_url: pub.publicUrl,
+          solution_path: path,
+          solution_name: f.name,
+        },
+      });
+      toast.success("Solution added! Thanks for contributing.");
+      onSolutionAdded?.({ solution_url: pub.publicUrl, solution_name: f.name });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add solution");
+    } finally {
+      setUploadingSol(false);
     }
   };
 
@@ -356,7 +416,25 @@ function FileCard({ upload }: { upload: Upload }) {
               <Download className="w-3.5 h-3.5" /> Solution
             </a>
           ) : (
-            <span className="text-[10px] text-muted-foreground px-2 py-1">No solution yet</span>
+            <>
+              <button
+                type="button"
+                onClick={handlePickSolution}
+                disabled={uploadingSol}
+                className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10 disabled:opacity-60"
+                title="Upload a solution PDF for this question"
+              >
+                {uploadingSol ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                {uploadingSol ? "Uploading…" : "Add solution"}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleSolutionFile}
+              />
+            </>
           )}
           {upload.code_url && (
             <a

@@ -416,7 +416,25 @@ function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded
               <Download className="w-3.5 h-3.5" /> Solution
             </a>
           ) : (
-            <span className="text-[10px] text-muted-foreground px-2 py-1">No solution yet</span>
+            <>
+              <button
+                type="button"
+                onClick={handlePickSolution}
+                disabled={uploadingSol}
+                className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10 disabled:opacity-60"
+                title="Upload a solution PDF for this question"
+              >
+                {uploadingSol ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                {uploadingSol ? "Uploading…" : "Add solution"}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleSolutionFile}
+              />
+            </>
           )}
           {upload.code_url && (
             <a

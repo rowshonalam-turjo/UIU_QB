@@ -241,10 +241,15 @@ function CoursePage() {
   );
 }
 
-function FileCard({ upload }: { upload: Upload }) {
+function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded?: (sol: { solution_url: string; solution_name: string }) => void }) {
   const [hover, setHover] = useState(false);
   const [copied, setCopied] = useState(false);
   const isPdf = /\.pdf(\?|$)/i.test(upload.file_url);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const addSolution = useServerFn(addSolutionToUpload);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploadingSol, setUploadingSol] = useState(false);
 
   const trackDownload = async () => {
     const { data: { user } } = await supabase.auth.getUser();

@@ -278,6 +278,51 @@ function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded
     }
   };
 
+  const handlePickSolution = () => {
+    if (!user) {
+      toast.info("Please sign in to add a solution");
+      navigate({ to: "/auth" });
+      return;
+    }
+    fileRef.current?.click();
+  };
+
+  const handleSolutionFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f || !user) return;
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (!["pdf", "jpg", "jpeg", "png", "webp"].includes(ext)) {
+      toast.error("Only PDF, JPG, PNG or WEBP allowed");
+      return;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      toast.error("Solution file too large (max 20MB)");
+      return;
+    }
+    setUploadingSol(true);
+    try {
+      const path = `${user.id}/solutions/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("questions").upload(path, f, { cacheControl: "3600", upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("questions").getPublicUrl(path);
+      await addSolution({
+        data: {
+          upload_id: upload.id,
+          solution_url: pub.publicUrl,
+          solution_path: path,
+          solution_name: f.name,
+        },
+      });
+      toast.success("Solution added! Thanks for contributing.");
+      onSolutionAdded?.({ solution_url: pub.publicUrl, solution_name: f.name });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add solution");
+    } finally {
+      setUploadingSol(false);
+    }
+  };
+
   return (
     <motion.div
       onHoverStart={() => setHover(true)}

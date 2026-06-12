@@ -2,10 +2,11 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShieldCheck, ShieldOff, Loader2, Search, Crown, Users, FileText, CheckCircle2, XCircle, Eye, Trash2, UserX, Download } from "lucide-react";
+import { ArrowLeft, ShieldCheck, ShieldOff, Loader2, Search, Crown, Users, FileText, CheckCircle2, XCircle, Eye, Trash2, UserX, Download, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteUser as deleteUserFn } from "@/lib/admin.functions";
+import { approvePendingSolution, rejectPendingSolution } from "@/lib/uploads.functions";
 import { toast } from "sonner";
 
 

@@ -416,6 +416,10 @@ function FileCard({ upload }: { upload: Upload; onSolutionAdded?: (sol: { soluti
             >
               <Download className="w-3.5 h-3.5" /> Solution
             </a>
+          ) : submittedPending ? (
+            <span className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5" /> Solution pending review
+            </span>
           ) : (
             <>
               <button
@@ -423,7 +427,7 @@ function FileCard({ upload }: { upload: Upload; onSolutionAdded?: (sol: { soluti
                 onClick={handlePickSolution}
                 disabled={uploadingSol}
                 className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10 disabled:opacity-60"
-                title="Upload a solution PDF for this question"
+                title="Upload a solution PDF for this question (admin review required)"
               >
                 {uploadingSol ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                 {uploadingSol ? "Uploading…" : "Add solution"}

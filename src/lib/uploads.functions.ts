@@ -49,9 +49,9 @@ export const addSolutionToUpload = createServerFn({ method: "POST" })
 
 const ReviewInput = z.object({ upload_id: z.string().uuid() });
 
-async function assertAdmin(supabase: Awaited<ReturnType<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"]> extends never ? never : never, userId: string): Promise<void>;
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
+async function assertAdmin(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)

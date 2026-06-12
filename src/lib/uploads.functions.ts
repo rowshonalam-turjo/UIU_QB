@@ -66,7 +66,7 @@ export const approvePendingSolution = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ReviewInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await assertAdmin(supabaseAdmin, context.userId);
+    await assertAdmin(context.userId);
 
     const { data: existing, error: fetchErr } = await supabaseAdmin
       .from("uploads")
@@ -100,7 +100,7 @@ export const rejectPendingSolution = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ReviewInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await assertAdmin(supabaseAdmin, context.userId);
+    await assertAdmin(context.userId);
 
     const { data: existing, error: fetchErr } = await supabaseAdmin
       .from("uploads")

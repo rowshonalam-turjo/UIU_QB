@@ -122,6 +122,11 @@ export type Database = {
           file_url: string
           id: string
           likes: number
+          pending_solution_name: string | null
+          pending_solution_path: string | null
+          pending_solution_submitted_at: string | null
+          pending_solution_url: string | null
+          pending_solution_user_id: string | null
           solution_name: string | null
           solution_path: string | null
           solution_url: string | null
@@ -150,6 +155,11 @@ export type Database = {
           file_url: string
           id?: string
           likes?: number
+          pending_solution_name?: string | null
+          pending_solution_path?: string | null
+          pending_solution_submitted_at?: string | null
+          pending_solution_url?: string | null
+          pending_solution_user_id?: string | null
           solution_name?: string | null
           solution_path?: string | null
           solution_url?: string | null
@@ -178,6 +188,11 @@ export type Database = {
           file_url?: string
           id?: string
           likes?: number
+          pending_solution_name?: string | null
+          pending_solution_path?: string | null
+          pending_solution_submitted_at?: string | null
+          pending_solution_url?: string | null
+          pending_solution_user_id?: string | null
           solution_name?: string | null
           solution_path?: string | null
           solution_url?: string | null

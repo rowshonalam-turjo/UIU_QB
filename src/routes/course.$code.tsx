@@ -241,7 +241,7 @@ function CoursePage() {
   );
 }
 
-function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded?: (sol: { solution_url: string; solution_name: string }) => void }) {
+function FileCard({ upload }: { upload: Upload; onSolutionAdded?: (sol: { solution_url: string; solution_name: string }) => void }) {
   const [hover, setHover] = useState(false);
   const [copied, setCopied] = useState(false);
   const isPdf = /\.pdf(\?|$)/i.test(upload.file_url);
@@ -250,6 +250,7 @@ function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded
   const addSolution = useServerFn(addSolutionToUpload);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadingSol, setUploadingSol] = useState(false);
+  const [submittedPending, setSubmittedPending] = useState(false);
 
   const trackDownload = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -314,8 +315,8 @@ function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded
           solution_name: f.name,
         },
       });
-      toast.success("Solution added! Thanks for contributing.");
-      onSolutionAdded?.({ solution_url: pub.publicUrl, solution_name: f.name });
+      toast.success("Solution submitted for admin review. Thanks!");
+      setSubmittedPending(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add solution");
     } finally {
@@ -415,6 +416,10 @@ function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded
             >
               <Download className="w-3.5 h-3.5" /> Solution
             </a>
+          ) : submittedPending ? (
+            <span className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5" /> Solution pending review
+            </span>
           ) : (
             <>
               <button
@@ -422,7 +427,7 @@ function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded
                 onClick={handlePickSolution}
                 disabled={uploadingSol}
                 className="px-3 py-1.5 rounded-lg glass text-xs font-medium inline-flex items-center gap-1.5 hover:bg-white/10 disabled:opacity-60"
-                title="Upload a solution PDF for this question"
+                title="Upload a solution PDF for this question (admin review required)"
               >
                 {uploadingSol ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                 {uploadingSol ? "Uploading…" : "Add solution"}

@@ -364,6 +364,154 @@ function UploadModeration() {
   );
 }
 
+type PendingSolutionRow = {
+  id: string;
+  title: string;
+  course_code: string;
+  type: string;
+  trimester: string | null;
+  file_url: string;
+  file_name: string;
+  pending_solution_url: string;
+  pending_solution_name: string | null;
+  pending_solution_user_id: string | null;
+  pending_solution_submitted_at: string | null;
+  submitter_name?: string | null;
+  submitter_email?: string | null;
+};
+
+function PendingSolutions() {
+  const [rows, setRows] = useState<PendingSolutionRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PendingSolutionRow | null>(null);
+  const approveFn = useServerFn(approvePendingSolution);
+  const rejectFn = useServerFn(rejectPendingSolution);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("uploads")
+      .select("id, title, course_code, type, trimester, file_url, file_name, pending_solution_url, pending_solution_name, pending_solution_user_id, pending_solution_submitted_at")
+      .not("pending_solution_url", "is", null)
+      .order("pending_solution_submitted_at", { ascending: false });
+    const list = (data ?? []) as PendingSolutionRow[];
+    const ids = Array.from(new Set(list.map((r) => r.pending_solution_user_id).filter((x): x is string => !!x)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      list.forEach((r) => {
+        const p = r.pending_solution_user_id ? map.get(r.pending_solution_user_id) : null;
+        r.submitter_name = p?.full_name ?? null;
+        r.submitter_email = p?.email ?? null;
+      });
+    }
+    setRows(list);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const review = async (id: string, action: "approve" | "reject") => {
+    setBusyId(id);
+    try {
+      if (action === "approve") await approveFn({ data: { upload_id: id } });
+      else await rejectFn({ data: { upload_id: id } });
+      toast.success(action === "approve" ? "Solution published" : "Solution rejected");
+      setPreview(null);
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="glass-card overflow-hidden mt-8">
+      <div className="p-5 border-b border-border flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-muted-foreground" />
+          <h2 className="font-bold">Pending solutions</h2>
+          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded gradient-bg text-background font-semibold">{rows.length}</span>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="p-12 text-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" /></div>
+      ) : rows.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">No solutions awaiting review.</div>
+      ) : (
+        <div className="divide-y divide-border">
+          {rows.map((r) => (
+            <div key={r.id} className="px-4 sm:px-6 py-4 flex items-center gap-3 flex-wrap hover:bg-white/5">
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{r.title}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 font-mono">
+                  {r.course_code} · {r.type} {r.trimester ? `· ${r.trimester}` : ""} · solution by {r.submitter_name || r.submitter_email || "unknown"}
+                </div>
+              </div>
+              <button onClick={() => setPreview(r)} className="px-3 py-1.5 rounded-lg glass text-xs inline-flex items-center gap-1.5 hover:bg-white/10">
+                <Eye className="w-3.5 h-3.5" /> Preview
+              </button>
+              <button
+                onClick={() => review(r.id, "approve")}
+                disabled={busyId === r.id}
+                className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs inline-flex items-center gap-1.5 hover:bg-emerald-500/30 disabled:opacity-50"
+              >
+                {busyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} Approve
+              </button>
+              <button
+                onClick={() => review(r.id, "reject")}
+                disabled={busyId === r.id}
+                className="px-3 py-1.5 rounded-lg bg-destructive/20 text-destructive text-xs inline-flex items-center gap-1.5 hover:bg-destructive/30 disabled:opacity-50"
+              >
+                <XCircle className="w-3.5 h-3.5" /> Reject
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {preview && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPreview(null)}>
+          <div className="glass-card w-full max-w-5xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 border-b border-border flex items-center justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <div className="font-bold truncate">Solution for: {preview.title}</div>
+                <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {preview.course_code} · submitted by {preview.submitter_email || "unknown"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href={preview.file_url} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-lg glass text-xs">Open question</a>
+                <button
+                  onClick={() => review(preview.id, "approve")}
+                  disabled={busyId === preview.id}
+                  className="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                </button>
+                <button
+                  onClick={() => review(preview.id, "reject")}
+                  disabled={busyId === preview.id}
+                  className="px-3 py-2 rounded-lg bg-destructive/20 text-destructive text-xs font-medium inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <XCircle className="w-3.5 h-3.5" /> Reject
+                </button>
+                <button onClick={() => setPreview(null)} className="px-3 py-2 rounded-lg glass text-xs">Close</button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto bg-black/40">
+              <iframe src={preview.pending_solution_url} title={preview.pending_solution_name ?? "Solution"} className="w-full h-[70vh]" sandbox="" referrerPolicy="no-referrer" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type DownloadRow = {
   upload_id: string;
   title: string;

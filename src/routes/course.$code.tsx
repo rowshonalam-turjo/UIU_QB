@@ -316,7 +316,7 @@ function FileCard({ upload }: { upload: Upload; onSolutionAdded?: (sol: { soluti
         },
       });
       toast.success("Solution submitted for admin review. Thanks!");
-      onSolutionAdded?.({ solution_url: pub.publicUrl, solution_name: f.name });
+      setSubmittedPending(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add solution");
     } finally {

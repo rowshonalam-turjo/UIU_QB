@@ -314,7 +314,7 @@ function FileCard({ upload, onSolutionAdded }: { upload: Upload; onSolutionAdded
           solution_name: f.name,
         },
       });
-      toast.success("Solution added! Thanks for contributing.");
+      toast.success("Solution submitted for admin review. Thanks!");
       onSolutionAdded?.({ solution_url: pub.publicUrl, solution_name: f.name });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add solution");
